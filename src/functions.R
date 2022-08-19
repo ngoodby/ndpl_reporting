@@ -18,3 +18,4 @@ make_map <- function(all_dat, dat_count){
     addCircleMarkers(lat = ~latitude, lng = ~longitude, weight = 1, label = ~paste("Survey Site Name:", location_name))
   return(sites)
 }
+

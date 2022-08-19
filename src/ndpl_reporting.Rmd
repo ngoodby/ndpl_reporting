@@ -17,8 +17,6 @@ params:
 <img width="100" src="../images/NABat_logo.png">
 
 ```{r setup, include=FALSE}
-test change
-
 knitr::opts_chunk$set(echo = FALSE,
                       warning = FALSE,
                       message = FALSE,
@@ -68,6 +66,7 @@ source(here::here("src", "functions.R"))
 ```
 
 ```{r NABat API, results = 'hide'}
+#bringing in data
 
 username = 'ngoodby@batcon.org'
 password = '3%0T47ICp%cU'
@@ -75,8 +74,8 @@ report_grts = 2230
 project_id = 963
 report_locations = ""
 
-username = params$username
-password = params$password
+# username = params$username
+# password = params$password
 
 token = get_nabat_gql_token(username, password)
 token = get_refresh_token(token)
@@ -112,6 +111,7 @@ species_df = get_species(token = token)
 ```
 
 ```{r Joining Data}
+#data prep
 all_dat <- left_join(sa_bulk_df, species_df, by = c("manual_id" = "id"))
 
 all_dat$survey_event_id <- as.numeric(all_dat$survey_event_id)
@@ -121,10 +121,12 @@ all_dat <- left_join(all_dat, sa_survey_df, keep = FALSE)
 ```
 
 ```{r Data Prep}
+#data prep
 exclude <- c("LACITABR", "LANOTABR","LABLPAHE", "LABOPESU", "EUMAEUPE","EUMAIDPH", "MYCAMYYU", "MYEVMYTH","MYLUMYVO", "EPFULANO", "Q10k", "Q15k", "Q20k", "Q25k", "Q40k", "40kMyo", "40k", "Q50k", "LACITABR,HiF", "Q25k,MYCAMYYU", "Q25k,HiF", "Q40k,Q25k", "Q40k,LoF", "MY40", "Social", "25K", "25k", "NOISE", "LowF", "HighF", "NoID", "LoF", "HiF", "Noise", "MYSP")
 ```
 
 ```{r}
+#data prep
 if (report_locations[1] == ""){
   all_dat <- all_dat %>% mutate(year = lubridate::year(recording_night)) %>% 
     dplyr::filter(grts_cell_id %in% report_grts)
@@ -136,12 +138,16 @@ if (report_locations[1] == ""){
 
 
 ```{r}
+#data prep
+
 #these two lines to compensate for year not loading on import from NABat API. Can remove if that ever gets resolved. 
 sa_proj_dates = unique(all_dat$year)
 this_year = max(sa_proj_dates)
 ```
 
 ```{r}
+# data prep
+
 dat_count <- all_dat %>% 
   dplyr::filter(!species_code %in% exclude) %>%
   dplyr::filter(nchar(species_code) == 4) %>% 
@@ -183,6 +189,8 @@ margin: auto;
 </style>
 
 ```{r Map}
+# option to spit out .kml
+
 map <- make_map(all_dat, dat_count)
 map
 ```
@@ -194,6 +202,8 @@ map
 ### Bat species confirmed in 2021
 
 ```{r Species by Location Table 2021}
+#CHRISTEN: decide if you like this format and update if needed. 
+
 species_table_this_year <- dat_count %>% 
   dplyr::filter(year == this_year) %>%
    mutate(common_name = case_when(
@@ -228,6 +238,8 @@ species_table_this_year %>%
 ### Bat species confirmed all years
 
 ```{r Species by Location Table All Time}
+#CHRISTEN: decide if you like this format and update if needed. 
+
 species_table_all_time <- dat_count %>%
   dplyr::filter(pres_abs == "X") %>% 
    mutate(common_name = case_when(
@@ -268,22 +280,25 @@ species_table_all_time %>%
 Click on the links below to learn more about the species have been detected at these sites to date.
 
 ```{r Species Photos}
-species_ref_list <- unique(species_reference_table$species_code)
 
-photos <- dat_count %>% 
-  dplyr::filter(pres_abs == "X") %>%
-  dplyr::group_by(species) %>% 
-  dplyr::distinct(species) %>% 
-  dplyr::summarise(photo = case_when(
-    species %in% species_ref_list ~ sprintf("![](../images/%s.jpg)", species),
-    !species %in% species_ref_list ~ "no photo available"
-  )) %>% 
-  left_join(species_reference_table, by = c("species" = "species_code")) %>% 
-  mutate(species_full_name = cell_spec(species_full_name, 'html', link = species_url)) %>% 
-  dplyr::select(species_full_name, photo) %>% 
-  dplyr::rename("Species" = species_full_name, "Photo" = photo)
-  
-kable(photos, "html", escape = FALSE) 
+# site photos?
+
+# species_ref_list <- unique(species_reference_table$species_code)
+# 
+# photos <- dat_count %>% 
+#   dplyr::filter(pres_abs == "X") %>%
+#   dplyr::group_by(species) %>% 
+#   dplyr::distinct(species) %>% 
+#   dplyr::summarise(photo = case_when(
+#     species %in% species_ref_list ~ sprintf("![](../images/%s.jpg)", species),
+#     !species %in% species_ref_list ~ "no photo available"
+#   )) %>% 
+#   left_join(species_reference_table, by = c("species" = "species_code")) %>% 
+#   mutate(species_full_name = cell_spec(species_full_name, 'html', link = species_url)) %>% 
+#   dplyr::select(species_full_name, photo) %>% 
+#   dplyr::rename("Species" = species_full_name, "Photo" = photo)
+#   
+# kable(photos, "html", escape = FALSE) 
 ```
 
 ***
@@ -320,6 +335,8 @@ species_count %>% ggplot(aes(x = location_name, y = value, fill = name)) +
 ## __Survey Dates__
 
 ```{r}
+# CHRISTEN: show all years of survey dates. include detector make/model, lat/long.
+
 survey_dates <- all_dat %>% 
   dplyr::filter(grepl(this_year, recording_night)) %>% 
   dplyr::group_by(grts_cell_id, location_name) %>% 
@@ -345,22 +362,22 @@ survey_dates %>% flextable() %>%
 The following bar chart gives a sense of when bats were active at these sites this past summer, as it shows the number of bat recordings captured during each hour of the day. Note that this is a total count that includes all survey nights at all survey sites in this report.  
 
 ```{r Bat Activity Bar Chart}
-all_dat$recording_time <- lubridate::parse_date_time(all_dat$recording_time, orders = "ymd HMS")
-all_dat$time <- format(as.POSIXct(all_dat$recording_time),format = "%I %p")
-all_dat$time <- factor(all_dat$time, levels = c("12 PM", "01 PM", "02 PM", "03 PM", "04 PM", "05 PM", "06 PM", "07 PM", "08 PM", "09 PM", "10 PM", "11 PM", "12 AM", "01 AM", "02 AM", "03 AM", "04 AM", "05 AM", "06 AM", "07 AM", "08 AM", "09 AM", "10 AM", "11 AM"))
-
-
-call_times <- all_dat %>%
-  dplyr::filter(., grepl(this_year, recording_night)) %>% 
-  ggplot(., aes(time, group = 1)) +
-  geom_bar(stat = 'count', fill = "blue") +
-  scale_x_discrete(drop=FALSE) +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-  xlab("") +
-  ylab("Count of Bat Calls") +
-  facet_wrap(grts_cell_id ~ location_name, ncol = 2)
-
-call_times
+# all_dat$recording_time <- lubridate::parse_date_time(all_dat$recording_time, orders = "ymd HMS")
+# all_dat$time <- format(as.POSIXct(all_dat$recording_time),format = "%I %p")
+# all_dat$time <- factor(all_dat$time, levels = c("12 PM", "01 PM", "02 PM", "03 PM", "04 PM", "05 PM", "06 PM", "07 PM", "08 PM", "09 PM", "10 PM", "11 PM", "12 AM", "01 AM", "02 AM", "03 AM", "04 AM", "05 AM", "06 AM", "07 AM", "08 AM", "09 AM", "10 AM", "11 AM"))
+# 
+# 
+# call_times <- all_dat %>%
+#   dplyr::filter(., grepl(this_year, recording_night)) %>% 
+#   ggplot(., aes(time, group = 1)) +
+#   geom_bar(stat = 'count', fill = "blue") +
+#   scale_x_discrete(drop=FALSE) +
+#   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+#   xlab("") +
+#   ylab("Count of Bat Calls") +
+#   facet_wrap(grts_cell_id ~ location_name, ncol = 2)
+# 
+# call_times
 ```
 
 ***
