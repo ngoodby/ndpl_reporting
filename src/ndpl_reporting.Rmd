@@ -56,16 +56,12 @@ knitr::opts_chunk$set(echo = FALSE,
 ```
 
 ```{r}
+source(here::here("src", "functions.R"))
 report_grts <- params$grts %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both")) %>% as.numeric()
 report_locations <- params$locations %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both"))
 project_id = params$project %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both")) %>% as.numeric()
 username = params$username
 password = params$password
-```
-
-```{r}
-#load in functions
-source(here::here("src", "functions.R"))
 ```
 
 ```{r NABat API, results = 'hide'}
