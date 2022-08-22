@@ -104,8 +104,9 @@ margin: auto;
 
 ```{r Map}
 map <- make_map(all_dat, dat_count)
-sf::st_write(map[[2]], dsn = here::here("geojson_files", "grts_boundaries.geojson"), layer = "grts_boundaries.geojson", delete_dsn = T, quiet=T)
-sf::st_write(map[[3]], dsn = here::here("geojson_files", "site_locs.geojson"), layer = "site_locs.geojson", delete_dsn = T, quiet=T)
+if (!dir.exists(here::here("geojson_files"))) {dir.create(here::here("geojson_files"))}
+sf::st_write(map[[2]], dsn = here::here("geojson_files", paste0("grts_boundaries_", Sys.Date(), ".geojson")), layer = "grts_boundaries.geojson", delete_dsn = T, quiet=T)
+sf::st_write(map[[3]], dsn = here::here("geojson_files",  paste0("site_locs_", Sys.Date(), ".geojson")), layer = "site_locs.geojson", delete_dsn = T, quiet=T)
 map[[1]]
 ```
 
