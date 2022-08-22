@@ -68,14 +68,14 @@ source(here::here("src", "functions.R"))
 ```{r NABat API, results = 'hide'}
 #bringing in data
 
-username = 'ngoodby@batcon.org'
-password = '3%0T47ICp%cU'
-report_grts = 2230
-project_id = 963
-report_locations = ""
+# username = 'ngoodby@batcon.org'
+# password = '3%0T47ICp%cU'
+# report_grts = 2230
+# project_id = 963
+# report_locations = ""
 
-# username = params$username
-# password = params$password
+username = params$username
+password = params$password
 
 token = get_nabat_gql_token(username, password)
 token = get_refresh_token(token)
@@ -189,10 +189,10 @@ margin: auto;
 </style>
 
 ```{r Map}
-# option to spit out .kml
-
 map <- make_map(all_dat, dat_count)
-map
+sf::st_write(map[[2]], dsn = here::here("geojson_files", "grts_boundaries.geojson"), layer = "grts_boundaries.geojson", delete_dsn = T, quiet=T)
+sf::st_write(map[[3]], dsn = here::here("geojson_files", "site_locs.geojson"), layer = "site_locs.geojson", delete_dsn = T, quiet=T)
+map[[1]]
 ```
 
 ***

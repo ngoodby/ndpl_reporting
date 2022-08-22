@@ -3,3 +3,5 @@ images
 images/
 .Rproj.user
 .DS_Store
+geojson_files
+geojson_files/
