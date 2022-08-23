@@ -53,27 +53,30 @@ knitr::opts_chunk$set(echo = FALSE,
   library(data.table)
   library(scales)
   library(kableExtra)
+  library(magick)
 ```
 
 ```{r}
-source(here::here("src", "functions.R"))
-report_grts <- params$grts %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both")) %>% as.numeric()
-report_locations <- params$locations %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both"))
-project_id = params$project %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both")) %>% as.numeric()
-username = params$username
-password = params$password
+# report_grts <- params$grts %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both")) %>% as.numeric()
+# report_locations <- params$locations %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both"))
+# project_id = params$project %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both")) %>% as.numeric()
+# username = params$username
+# password = params$password
 ```
 
 ```{r NABat API, results = 'hide'}
-# username = 'ngoodby@batcon.org'
-# password = '3%0T47ICp%cU'
-# report_grts = 2230
-# project_id = 963
-# report_locations = ""
+username = 'ngoodby@batcon.org'
+password = '3%0T47ICp%cU'
+report_grts = 106
+project_id = 353
+report_locations = ""
 
-data <- load_nabat_data(username, password, project_id)
+source(here::here("src", "functions.R"))
+data <- load_nabat_data(username, password, project_id, report_grts)
 all_dat <- data[[1]]
 dat_count <- data[[2]]
+sa_survey_df <- data[[3]]
+this_year = max(all_dat$year)
 ```
 
 ```{r}
@@ -210,6 +213,38 @@ Click on the links below to learn more about the species have been detected at t
 #   dplyr::rename("Species" = species_full_name, "Photo" = photo)
 #   
 # kable(photos, "html", escape = FALSE) 
+```
+
+```{r}
+source(here::here("src","site_photos.R"))
+photo_queries <- sa_survey_df %>% dplyr::select(project_id, survey_id, survey_event_id) %>% distinct()
+pics=list()
+for (i in seq(1, nrow(photo_queries))){
+  proj_id = photo_queries[i,1]
+  surv_num = photo_queries[i,2]
+  surv_id = photo_queries[i,3]
+  photos_out = get_site_photos(proj_id, surv_num, surv_id)
+  pics = append(pics, list(photos_out))
+}
+```
+
+```{r}
+# fruits <- c("apple", "banana", "grape")
+# for(i in fruits) {
+#     cat(paste0("![](", "~/Desktop/R/Files/", i, ".jpg)"), "\n")
+# }
+
+# known issue that include_graphics doesn't work in a for loop. Need to update this.
+
+ for (i in seq(1, length(pics))){
+  for (pic in seq(1, length(pics[[i]]))){
+    photo <- pics[[i]][pic]
+    image_write(photo, "my_photo.jpg")
+    knitr::include_graphics("my_photo.jpg")
+    mask <- photo_queries[i,] %>% dplyr::select(survey_event_id) %>% pull()
+    print(sa_survey_df %>% dplyr::filter(survey_event_id == mask) %>% dplyr::pull(grts_cell_id, event))
+  }
+}
 ```
 
 ***
