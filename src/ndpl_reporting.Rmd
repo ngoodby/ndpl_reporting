@@ -53,27 +53,32 @@ knitr::opts_chunk$set(echo = FALSE,
   library(data.table)
   library(scales)
   library(kableExtra)
+  library(magick)
+  library(webshot)
 ```
 
 ```{r}
-source(here::here("src", "functions.R"))
-report_grts <- params$grts %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both")) %>% as.numeric()
-report_locations <- params$locations %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both"))
-project_id = params$project %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both")) %>% as.numeric()
-username = params$username
-password = params$password
+# report_grts <- params$grts %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both")) %>% as.numeric()
+# report_locations <- params$locations %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both"))
+# project_id = params$project %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both")) %>% as.numeric()
+# username = params$username
+# password = params$password
 ```
 
 ```{r NABat API, results = 'hide'}
-# username = 'ngoodby@batcon.org'
-# password = '3%0T47ICp%cU'
-# report_grts = 2230
-# project_id = 963
-# report_locations = ""
+username = 'ngoodby@batcon.org'
+password = '3%0T47ICp%cU'
+report_grts = 106
+project_id = 353
+report_locations = ""
 
-data <- load_nabat_data(username, password, project_id)
+source(here::here("src", "functions.R"))
+data <- load_nabat_data(username, password, project_id, report_grts)
 all_dat <- data[[1]]
 dat_count <- data[[2]]
+sa_survey_df <- data[[3]]
+this_year = max(all_dat$year)
+# this_year <- format(Sys.Date(), "%Y")
 ```
 
 ```{r}
@@ -100,7 +105,8 @@ margin: auto;
 
 ```{r Map}
 map <- make_map(all_dat, dat_count)
-if (!dir.exists(here::here("geojson_files"))) {dir.create(here::here("geojson_files"))}
+unlink(here::here("geojson_files"), recursive = T) 
+dir.create(here::here("geojson_files"))
 sf::st_write(map[[2]], dsn = here::here("geojson_files", paste0("grts_boundaries_", Sys.Date(), ".geojson")), layer = "grts_boundaries.geojson", delete_dsn = T, quiet=T)
 sf::st_write(map[[3]], dsn = here::here("geojson_files",  paste0("site_locs_", Sys.Date(), ".geojson")), layer = "site_locs.geojson", delete_dsn = T, quiet=T)
 map[[1]]
@@ -186,30 +192,58 @@ species_table_all_time %>%
 
 ***
 
-## __Photos of Species Detected__
+## __Site Photos__
 
-Click on the links below to learn more about the species have been detected at these sites to date.
+```{r}
+source(here::here("src","site_photos.R"))
+photo_queries <- sa_survey_df %>% dplyr::select(project_id, survey_id, survey_event_id) %>% distinct()
+pics=list()
+for (i in seq(1, nrow(photo_queries))){
+  proj_id = photo_queries[i,1]
+  surv_num = photo_queries[i,2]
+  surv_id = photo_queries[i,3]
+  photos_out = get_site_photos(proj_id, surv_num, surv_id)
+  pics = append(pics, list(photos_out))
+}
+```
 
-```{r Species Photos}
+```{r}
+# delete site_photos folder from previous reports generated
+unlink(here::here("site_photos"), recursive = T) 
 
-# site photos?
+# create folders for each survey site and put the relevant photos into them
+for (i in seq(1, length(pics))){
+  grts <- sa_survey_df[i,]$grts_cell_id
+  loc <- sa_survey_df[i,]$event
+  dir.create(here::here("site_photos", grts, loc), recursive=T)
+  for (pic in seq(1, length(pics[[i]]))){
+    photo <- pics[[i]][pic]
+    path <- here::here("site_photos", grts, loc, paste0(pic, ".jpg"))
+    photo <- image_scale(photo, "350x350!")
+    # photo <- image_annotate(photo, sprintf("NABat Cell: %s\nSite: %s", grts, loc), size = 30, color = "red")
+    image_write(photo, path)
+  }
+}
 
-# species_ref_list <- unique(species_reference_table$species_code)
-# 
-# photos <- dat_count %>% 
-#   dplyr::filter(pres_abs == "X") %>%
-#   dplyr::group_by(species) %>% 
-#   dplyr::distinct(species) %>% 
-#   dplyr::summarise(photo = case_when(
-#     species %in% species_ref_list ~ sprintf("![](../images/%s.jpg)", species),
-#     !species %in% species_ref_list ~ "no photo available"
-#   )) %>% 
-#   left_join(species_reference_table, by = c("species" = "species_code")) %>% 
-#   mutate(species_full_name = cell_spec(species_full_name, 'html', link = species_url)) %>% 
-#   dplyr::select(species_full_name, photo) %>% 
-#   dplyr::rename("Species" = species_full_name, "Photo" = photo)
-#   
-# kable(photos, "html", escape = FALSE) 
+#get paths to photos
+files <- list.files(path = here::here("site_photos"), 
+                    pattern = "^.*.jpg$",
+                    full.names = T,
+                    recursive = T)
+short_path <- list.files(path = here::here("site_photos"), 
+                    pattern = "^.*.jpg$",
+                    full.names = F,
+                    recursive = T)
+
+#create captions for photos
+cells <- short_path %>% strsplit( "/" ) %>% sapply( "[", 1 )
+sites <-  short_path %>% strsplit( "/" ) %>% sapply( "[", 2 )
+captions <- str_c("NABat Cell ", cells, "; Survey Site: ", sites, sep = "")
+```
+
+```{r, results = 'asis'}
+# display photos with their captions
+cat(sprintf('![%s](%s)\n', captions, files), sep = '\n')
 ```
 
 ***

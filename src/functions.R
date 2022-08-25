@@ -2,7 +2,8 @@ make_map <- function(all_dat, dat_count){
   #' @title Make Map
   #'
   #' @description Generate map of relevant GRTS and survey sites.
-  
+  #' 
+
   #bringing in GRTS shapefile
   load(paste0(here::here(), "/data/grts.grid.rda"))
   grts_mapping <- grts.grid %>% 
@@ -35,10 +36,11 @@ make_map <- function(all_dat, dat_count){
 }
 
 
-load_nabat_data <- function(username, password, project_id){
+load_nabat_data <- function(username, password, project_id, report_grts){
   #' @title Load NABat Data
   #'
   #' @description Load and clean data
+  #' 
 
   exclude <- c("LACITABR", "LANOTABR","LABLPAHE", "LABOPESU", "EUMAEUPE","EUMAIDPH", "MYCAMYYU", "MYEVMYTH",
                "MYLUMYVO", "EPFULANO", "Q10k", "Q15k", "Q20k", "Q25k", "Q40k", "40kMyo", "40k", "Q50k", 
@@ -60,6 +62,7 @@ load_nabat_data <- function(username, password, project_id){
       sa_survey_df <- bind_rows(sa_survey_df, sa_survey_df_add)
     }
   }
+  sa_survey_df = sa_survey_df %>% dplyr::filter(grts_cell_id %in% report_grts)
   # sa_proj_dates = unique(sa_survey_df$year)
   # this_year = sa_proj_dates[1]
   token = get_refresh_token(token)
@@ -72,11 +75,10 @@ load_nabat_data <- function(username, password, project_id){
   all_dat$survey_event_id <- as.numeric(all_dat$survey_event_id)
   sa_survey_df$survey_event_id <- as.numeric(sa_survey_df$survey_event_id)
   all_dat <- left_join(all_dat, sa_survey_df, keep = FALSE) %>% 
-    mutate(year = lubridate::year(recording_night)) %>% 
-    dplyr::filter(grts_cell_id %in% report_grts)
+    mutate(year = lubridate::year(recording_night))
   if (report_locations[1] != ""){
     all_dat <- all_dat %>% mutate(year = lubridate::year(recording_night)) %>% 
-      dplyr::filter(grts_cell_id %in% report_grts) %>% dplyr::filter(location_name %in% report_locations)
+      dplyr::filter(location_name %in% report_locations)
   }
   #these two lines to compensate for year not loading on import from NABat API. Can remove if that ever gets resolved. 
   sa_proj_dates = unique(all_dat$year)
@@ -96,5 +98,5 @@ load_nabat_data <- function(username, password, project_id){
       value > 0 ~ "X")) %>%
     dplyr::rename(species = name) %>%
     dplyr::select(-value)
-  return(list(all_dat, dat_count))
+  return(list(all_dat, dat_count, sa_survey_df))
 }
