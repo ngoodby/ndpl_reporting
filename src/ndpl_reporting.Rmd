@@ -54,6 +54,7 @@ knitr::opts_chunk$set(echo = FALSE,
   library(scales)
   library(kableExtra)
   library(magick)
+  library(webshot)
 ```
 
 ```{r}
@@ -77,6 +78,7 @@ all_dat <- data[[1]]
 dat_count <- data[[2]]
 sa_survey_df <- data[[3]]
 this_year = max(all_dat$year)
+# this_year <- format(Sys.Date(), "%Y")
 ```
 
 ```{r}
@@ -103,7 +105,8 @@ margin: auto;
 
 ```{r Map}
 map <- make_map(all_dat, dat_count)
-if (!dir.exists(here::here("geojson_files"))) {dir.create(here::here("geojson_files"))}
+unlink(here::here("geojson_files"), recursive = T) 
+dir.create(here::here("geojson_files"))
 sf::st_write(map[[2]], dsn = here::here("geojson_files", paste0("grts_boundaries_", Sys.Date(), ".geojson")), layer = "grts_boundaries.geojson", delete_dsn = T, quiet=T)
 sf::st_write(map[[3]], dsn = here::here("geojson_files",  paste0("site_locs_", Sys.Date(), ".geojson")), layer = "site_locs.geojson", delete_dsn = T, quiet=T)
 map[[1]]
@@ -189,31 +192,7 @@ species_table_all_time %>%
 
 ***
 
-## __Photos of Species Detected__
-
-Click on the links below to learn more about the species have been detected at these sites to date.
-
-```{r Species Photos}
-
-# site photos?
-
-# species_ref_list <- unique(species_reference_table$species_code)
-# 
-# photos <- dat_count %>% 
-#   dplyr::filter(pres_abs == "X") %>%
-#   dplyr::group_by(species) %>% 
-#   dplyr::distinct(species) %>% 
-#   dplyr::summarise(photo = case_when(
-#     species %in% species_ref_list ~ sprintf("![](../images/%s.jpg)", species),
-#     !species %in% species_ref_list ~ "no photo available"
-#   )) %>% 
-#   left_join(species_reference_table, by = c("species" = "species_code")) %>% 
-#   mutate(species_full_name = cell_spec(species_full_name, 'html', link = species_url)) %>% 
-#   dplyr::select(species_full_name, photo) %>% 
-#   dplyr::rename("Species" = species_full_name, "Photo" = photo)
-#   
-# kable(photos, "html", escape = FALSE) 
-```
+## __Site Photos__
 
 ```{r}
 source(here::here("src","site_photos.R"))
@@ -229,22 +208,42 @@ for (i in seq(1, nrow(photo_queries))){
 ```
 
 ```{r}
-# fruits <- c("apple", "banana", "grape")
-# for(i in fruits) {
-#     cat(paste0("![](", "~/Desktop/R/Files/", i, ".jpg)"), "\n")
-# }
+# delete site_photos folder from previous reports generated
+unlink(here::here("site_photos"), recursive = T) 
 
-# known issue that include_graphics doesn't work in a for loop. Need to update this.
-
- for (i in seq(1, length(pics))){
+# create folders for each survey site and put the relevant photos into them
+for (i in seq(1, length(pics))){
+  grts <- sa_survey_df[i,]$grts_cell_id
+  loc <- sa_survey_df[i,]$event
+  dir.create(here::here("site_photos", grts, loc), recursive=T)
   for (pic in seq(1, length(pics[[i]]))){
     photo <- pics[[i]][pic]
-    image_write(photo, "my_photo.jpg")
-    knitr::include_graphics("my_photo.jpg")
-    mask <- photo_queries[i,] %>% dplyr::select(survey_event_id) %>% pull()
-    print(sa_survey_df %>% dplyr::filter(survey_event_id == mask) %>% dplyr::pull(grts_cell_id, event))
+    path <- here::here("site_photos", grts, loc, paste0(pic, ".jpg"))
+    photo <- image_scale(photo, "350x350!")
+    # photo <- image_annotate(photo, sprintf("NABat Cell: %s\nSite: %s", grts, loc), size = 30, color = "red")
+    image_write(photo, path)
   }
 }
+
+#get paths to photos
+files <- list.files(path = here::here("site_photos"), 
+                    pattern = "^.*.jpg$",
+                    full.names = T,
+                    recursive = T)
+short_path <- list.files(path = here::here("site_photos"), 
+                    pattern = "^.*.jpg$",
+                    full.names = F,
+                    recursive = T)
+
+#create captions for photos
+cells <- short_path %>% strsplit( "/" ) %>% sapply( "[", 1 )
+sites <-  short_path %>% strsplit( "/" ) %>% sapply( "[", 2 )
+captions <- str_c("NABat Cell ", cells, "; Survey Site: ", sites, sep = "")
+```
+
+```{r, results = 'asis'}
+# display photos with their captions
+cat(sprintf('![%s](%s)\n', captions, files), sep = '\n')
 ```
 
 ***

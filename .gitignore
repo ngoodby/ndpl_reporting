@@ -1,3 +1,4 @@
+*.html
 grts.grid.rda
 images
 images/
@@ -6,3 +7,6 @@ images/
 geojson_files
 geojson_files/
 my_photo.jpg
+site_photos
+site_photos/
+
