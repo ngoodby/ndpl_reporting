@@ -241,10 +241,12 @@ sites <-  short_path %>% strsplit( "/" ) %>% sapply( "[", 2 )
 captions <- str_c("NABat Cell ", cells, "; Survey Site: ", sites, sep = "")
 ```
 
-```{r, results = 'asis'}
-# display photos with their captions
-cat(sprintf('![%s](%s)\n', captions, files), sep = '\n')
-```
+<details>
+  <summary>Click to View Site Photos</summary>
+    ```{r, results='asis', eval=TRUE}
+    cat(sprintf('![%s](%s)\n', captions, files), sep = '\n')
+    ```
+</details> 
 
 ***
 
@@ -371,4 +373,3 @@ You can report bat colonies and bat roosting sites to the California Department 
 <p align="center">
 <img width="400" src="../images/BCI_logo.png">
 </p>
-
