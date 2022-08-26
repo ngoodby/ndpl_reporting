@@ -211,6 +211,9 @@ species_table_this_year <- dat_count %>%
     !is.na(common_name) ~ common_name)) %>%
   pivot_wider(., id_cols = common_name,
               names_from = c(location_name, grts_cell_id),
+   mutate(species_code = case_when(
+    is.na(species_code) ~ species,
+  pivot_wider(., id_cols = species_code,
               values_from = pres_abs,
               names_glue = "NABat Cell {grts_cell_id};{location_name}") %>% 
   #names_sort = TRUE) %>% 
