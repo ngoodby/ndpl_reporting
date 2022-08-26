@@ -68,8 +68,8 @@ source(here::here("src", "functions.R"))
 ```{r NABat API, results = 'hide'}
 #bringing in data
 
-username = 'ngoodby@batcon.org'
-password = '3%0T47ICp%cU'
+username = 'clong@batcon.org'
+password = 'Myotisciliolabrum@9721'
 report_grts = 2230
 project_id = 963
 report_locations = ""
@@ -82,7 +82,8 @@ token = get_refresh_token(token)
 project_df = get_projects(token)
 token = get_refresh_token(token)
 
-project_id = params$project %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both")) %>% as.numeric()
+
+##project_id = params$project %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both")) %>% as.numeric()
 
 sa_survey_df = get_sa_project_summary(token,
                                       project_df,
@@ -99,8 +100,8 @@ if (length(additional_projects > 0)){
 }
 }
 
-# sa_proj_dates = unique(sa_survey_df$year)
-# this_year = sa_proj_dates[1]
+#sa_proj_dates = unique(sa_survey_df$year)
+#this_year = sa_proj_dates[1]
 
 token = get_refresh_token(token)
 sa_bulk_df = get_sa_bulk_wavs(token,
@@ -203,31 +204,30 @@ map
 
 ```{r Species by Location Table 2021}
 #CHRISTEN: decide if you like this format and update if needed. 
-
-species_table_this_year <- dat_count %>% 
+##need to group by before pivoting; will need to use summarize function
+species_table_this_year <- all_dat %>% 
   dplyr::filter(year == this_year) %>%
-   mutate(common_name = case_when(
-    is.na(common_name) ~ species,
-    !is.na(common_name) ~ common_name)) %>%
-  pivot_wider(., id_cols = common_name,
-              names_from = c(location_name, grts_cell_id),
-   mutate(species_code = case_when(
-    is.na(species_code) ~ species,
-  pivot_wider(., id_cols = species_code,
+   #mutate(species_code = case_when(
+    #is.na(species) ~ species,
+    # !is.na(species) ~ species)) %>%
+  pivot_wider(., id_cols = species,
+              names_from = c(recording_night, location_name, grts_cell_id),
               values_from = pres_abs,
-              names_glue = "NABat Cell {grts_cell_id};{location_name}") %>% 
+              names_glue = "NABat Cell {grts_cell_id};{location_name};{monitoring_night}") %>% 
   #names_sort = TRUE) %>% 
-  dplyr::rename("Species" = common_name)
+  dplyr::rename("Species" = species)
 
 species_table_names <- names(species_table_this_year)
 species_table_grts_names <- gsub(";.*", "", species_table_names)
 species_table_location_names <- gsub(".*;", "", species_table_names)
+species_table_monitoring_night <- gsub(".*;", "", species_table_names)
 
 species_table_this_year %>%
   flextable(col_keys = names(.)) %>% 
   delete_part(part = "header") %>% 
+  add_header_row(values= species_table_monitoring_night) %>%
   add_header_row(values = species_table_location_names) %>% 
-  add_header_row(values = species_table_grts_names) %>% 
+  add_header_row(top = TRUE, values = species_table_grts_names) %>% 
   merge_h(part = "header") %>% 
   merge_v(part = "header") %>% 
   theme_box() %>%
@@ -245,17 +245,17 @@ species_table_this_year %>%
 
 species_table_all_time <- dat_count %>%
   dplyr::filter(pres_abs == "X") %>% 
-   mutate(common_name = case_when(
-    is.na(common_name) ~ species,
-    !is.na(common_name) ~ common_name)) %>%
-  pivot_wider(., id_cols = common_name,
-              names_from = c(location_name, grts_cell_id),
+   mutate(species_code = case_when(
+    is.na(species_code) ~ species,
+    !is.na(species_code) ~ species_code)) %>%
+  pivot_wider(., id_cols = species_code,
+              names_from = c(location_name, grts_cell_id, year),
               values_from = year, 
               names_glue = "NABat Cell {grts_cell_id};{location_name}") %>% 
   map_df(., ~ gsub("[:]", ", ", .x)) %>%
   map_df(., ~gsub("[c(]", "", .x)) %>% 
   map_df(., ~gsub("[)]", "", .x)) %>% 
-  dplyr::rename("Species" = common_name) 
+  dplyr::rename("Species" = species_code) 
 
 species_table_names <- names(species_table_all_time) 
 species_table_grts_names <- gsub(";.*", "", species_table_names)
@@ -341,7 +341,7 @@ species_count %>% ggplot(aes(x = location_name, y = value, fill = name)) +
 # CHRISTEN: show all years of survey dates. include detector make/model, lat/long.
 
 survey_dates <- all_dat %>% 
-  dplyr::filter(grepl(this_year, recording_night)) %>% 
+  dplyr::filter(grepl(all_year, recording_night)) %>% 
   dplyr::group_by(grts_cell_id, location_name) %>% 
   dplyr::summarise(start_date = min(recording_night), end_date = max(recording_night)) %>% 
   mutate(grts_cell_id = as.character(grts_cell_id))  #gets rid  of commas in table output.
