@@ -60,6 +60,7 @@ knitr::opts_chunk$set(echo = FALSE,
   library(kableExtra)
   library(magick)
   library(webshot)
+  library(reticulate)
 ```
 
 ```{r}
@@ -391,16 +392,6 @@ survey_dates %>% flextable() %>%
 
 ***
 
-## __Background__
-
-Our region’s bats face unprecedented threats, including widespread habitat alteration and destruction, climate change and drought, and the arrival and spread of a deadly fungal disease called White-nose Syndrome. Yet little is known about the current abundance and distribution of most US bat species. NABat brings together a diverse and extensive network of partners in collecting data to assess the status and trends of bat populations throughout North America to inform the conservation and management of bats. Participation by private landowners is critical to the success of effective bat population monitoring in our region as many of our highest priority survey locations occur on private land. 
-
-There are over 1,400 bat species in the world, with California and Nevada being home to 25. Our region’s bats play important ecological roles that are vital to the health of our natural ecosystems and our human economies. Scientists estimate that insect-eating bats may save U.S. farmers roughly $23 billion each year by reducing crop damage and limiting the need for pesticides, as they eat up to half of their body weight in insects each night.
-
-Bats are difficult to observe and identify because they are most active at night and roost in small spaces. However, using “bat acoustic detectors”, we can record the echolocation calls of bats as they travel and forage for food during the night. The recordings can then be used to identify the species of the bats present in an area. 
-
-***
-
 ## __Example Sonograms__
 
 NABat divides North America into a grid of 10 x 10 km squares and randomly assigns a priority ranking to every square, which is used to determine which areas to target for surveying. Exact survey locations within the 10 x 10 km squares are then selected by biologists to target areas with high expected bat activity. Bat acoustic detectors are placed near landscape features that may attract bats, such as water, dead trees, barns, open space, and forest edges. 
@@ -412,6 +403,15 @@ Below is an example sonogram that shows a string of bat pulses. A sonogram is a 
 <p align="center">
 <img width="650" src="../images/LACI example sonogram.jpg">
 </p>
+
+***
+
+## __Metadata__
+
+```{r}
+library(readxl)
+metadata <- read_excel(here::here("data", "NDPL_Stationary_Acoustic_Metadata.xlsx")) %>% select()
+```
 
 ***
 
