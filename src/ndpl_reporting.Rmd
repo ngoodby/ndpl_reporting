@@ -64,6 +64,8 @@ knitr::opts_chunk$set(echo = FALSE,
 ```
 
 ```{r NABat API, results = 'hide'}
+# make it so you can make report for all grts in a project
+
 username = 'ngoodby@batcon.org'
 password = '3%0T47ICp%cU'
 report_grts = c(106,2858)
@@ -84,6 +86,9 @@ this_year = max(all_dat$year)
 #joining csv of scientific and common names for species and links
 species_reference_table <- read.csv(here::here("data", "species_reference_table.csv"))
 dat_count <- dat_count %>% left_join(species_reference_table, by = c("species" = "species_code"))
+
+# correct for join
+all_dat <- all_dat %>% left_join(species_reference_table, by = c("species_code" = "species_code"), keep=F)
 ```
 
 ### `r `print(params$agency, this_year, "NABat Results")`
@@ -128,7 +133,7 @@ map[[1]]
 total_species <- dat_count %>% dplyr::filter(year == this_year, pres_abs == "X") %>% group_by(year) %>% summarise(n = n_distinct(species)) %>% dplyr::pull(n)
 ```
 
-In `r `this_year`, we confirmed the presence of `r `total_species` bat species (Table 2). `r params$observations`
+In `r this_year`, we confirmed the presence of `r total_species` bat species (Table 2). `r params$observations`
 
 The 2021 metadata is presented in Appendix 2.
 
