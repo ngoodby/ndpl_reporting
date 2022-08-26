@@ -18,36 +18,30 @@ ui <- fluidPage(
   textInput("enter_locations", "Survey Location Name(s)", 
             value = "", placeholder = "Enter survey location names separated by a comma. Leave blank if you want all sites within the cell included.",
             width = '50%'),
-  selectInput("hub", "Which Hub is this report for?", choices = c("PacWest", "Southwest"),
+  selectInput("hub", "Whho is this report for?", choices = c("ndpl"),
               selected = NULL),
   downloadButton("report", "Generate Report")
 )
 
-# Define server
 server <- function(input, output, session) {
-  
   output$report <- downloadHandler(
     filename = "report.html",
     content = function(file) {
       withProgress(message = 'Rendering, please wait!', {
-        
-        tempReport <- file.path(here::here("src", paste(input$hub, "landowner", "reporting.Rmd", sep = "_")))
+        tempReport <- file.path(here::here("src", paste(input$hub, "reporting.Rmd", sep = "_")))
         file.copy("report.Rmd", tempReport, overwrite = TRUE)
-        
-        # Set up parameters to pass to Rmd document
-        params <- list(project = input$enter_project, username = input$enter_username, 
-                       password = input$enter_password, grts = input$enter_grts, 
-                       locations = input$enter_locations)
-        
-        # Knit the document, passing in the `params` list, and eval it in a
-        # child of the global environment (this isolates the code in the document
-        # from the code in this app).
-        
-        rmarkdown::render(tempReport, output_file = file,
-                          params = params,
-                          envir = new.env(parent = globalenv()))
 
-      })})
+    params <- list(project = input$enter_project, username = input$enter_username,
+                 password = input$enter_password, grts = input$enter_grts,
+                 locations = input$enter_locations)
+
+    rmarkdown::render(tempReport, output_file = file,
+                      params = params,
+                      envir = new.env(parent = globalenv()))
+          }
+        )
+      }
+    )
 }
 
 shinyApp(ui = ui, server = server)

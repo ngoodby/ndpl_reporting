@@ -12,6 +12,11 @@ params:
   password: NA
   grts: NA
   locations: NA
+  agency: NA
+  classifier: NA
+  kpro_region: NA
+  methods: NA
+  observations: NA
 ---
 
 <img width="100" src="../images/NABat_logo.png">
@@ -21,16 +26,6 @@ knitr::opts_chunk$set(echo = FALSE,
                       warning = FALSE,
                       message = FALSE,
                       fig.align = "center")
-```
-
-```{r}
-report_grts <- params$grts %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both")) %>% as.numeric()
-report_locations <- params$locations %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both"))
-```
-
-```{r}
-#load in functions
-source(here::here("src", "functions.R"))
 ```
 
 ```{r results = 'hide'}
@@ -63,109 +58,27 @@ source(here::here("src", "functions.R"))
   library(data.table)
   library(scales)
   library(kableExtra)
+  library(magick)
+  library(webshot)
+  library(reticulate)
 ```
 
 ```{r NABat API, results = 'hide'}
-#bringing in data
-
-username = 'clong@batcon.org'
-password = 'Myotisciliolabrum@9721'
-report_grts = 2230
-project_id = 963
+username = 'ngoodby@batcon.org'
+password = '3%0T47ICp%cU'
+report_grts = c(106,2858)
+project_id = 353
 report_locations = ""
+params$agency = "Tahoe National Forest"
 
-# username = params$username
-# password = params$password
-
-token = get_nabat_gql_token(username, password)
-token = get_refresh_token(token)
-project_df = get_projects(token)
-token = get_refresh_token(token)
-
-
-##project_id = params$project %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both")) %>% as.numeric()
-
-sa_survey_df = get_sa_project_summary(token,
-                                      project_df,
-                                      project_id[1])
-
-additional_projects <- project_id[-1]
-
-if (length(additional_projects > 0)){
-  for (i in additional_projects){
-  sa_survey_df_add = get_sa_project_summary(token,
-                                      project_df,
-                                      i)
-  sa_survey_df <- bind_rows(sa_survey_df, sa_survey_df_add)
-}
-}
-
-#sa_proj_dates = unique(sa_survey_df$year)
-#this_year = sa_proj_dates[1]
-
-token = get_refresh_token(token)
-sa_bulk_df = get_sa_bulk_wavs(token,
-                              sa_survey_df,
-                              year = 'all')
-token = get_refresh_token(token)
-species_df = get_species(token = token)
+source(here::here("src", "functions.R"))
+data <- load_nabat_data(username, password, project_id, report_grts)
+all_dat <- data[[1]]
+dat_count <- data[[2]]
+sa_survey_df <- data[[3]]
+this_year = max(all_dat$year)
+# this_year <- format(Sys.Date(), "%Y")
 ```
-
-```{r Joining Data}
-#data prep
-all_dat <- left_join(sa_bulk_df, species_df, by = c("manual_id" = "id"))
-
-all_dat$survey_event_id <- as.numeric(all_dat$survey_event_id)
-sa_survey_df$survey_event_id <- as.numeric(sa_survey_df$survey_event_id)
-
-all_dat <- left_join(all_dat, sa_survey_df, keep = FALSE)
-```
-
-```{r Data Prep}
-#data prep
-exclude <- c("LACITABR", "LANOTABR","LABLPAHE", "LABOPESU", "EUMAEUPE","EUMAIDPH", "MYCAMYYU", "MYEVMYTH","MYLUMYVO", "EPFULANO", "Q10k", "Q15k", "Q20k", "Q25k", "Q40k", "40kMyo", "40k", "Q50k", "LACITABR,HiF", "Q25k,MYCAMYYU", "Q25k,HiF", "Q40k,Q25k", "Q40k,LoF", "MY40", "Social", "25K", "25k", "NOISE", "LowF", "HighF", "NoID", "LoF", "HiF", "Noise", "MYSP")
-```
-
-```{r}
-#data prep
-if (report_locations[1] == ""){
-  all_dat <- all_dat %>% mutate(year = lubridate::year(recording_night)) %>% 
-    dplyr::filter(grts_cell_id %in% report_grts)
-} else {
-  all_dat <- all_dat %>% mutate(year = lubridate::year(recording_night)) %>% 
-    dplyr::filter(grts_cell_id %in% report_grts) %>% dplyr::filter(location_name %in% report_locations)
-}
-```
-
-
-```{r}
-#data prep
-
-#these two lines to compensate for year not loading on import from NABat API. Can remove if that ever gets resolved. 
-sa_proj_dates = unique(all_dat$year)
-this_year = max(sa_proj_dates)
-```
-
-```{r}
-# data prep
-
-dat_count <- all_dat %>% 
-  dplyr::filter(!species_code %in% exclude) %>%
-  dplyr::filter(nchar(species_code) == 4) %>% 
-  dplyr::filter(!is.na(manual_id)) %>%
-  separate_rows(species_code) %>% 
-  dplyr::group_by(year, grts_cell_id, location_name, species_code) %>%
-  dplyr::summarise(n = n()) %>%
-  pivot_wider(names_from = species_code, values_from = n) %>% 
-  replace(is.na(.), 0) %>%
-  pivot_longer(., cols = 4:length(.)) %>% 
-  dplyr::mutate(pres_abs = case_when(
-    value == 0 ~ "",
-    value > 0 ~ "X")) %>%
-  dplyr::rename(species = name) %>%
-  dplyr::select(-value)
-```
-
 
 ```{r}
 #joining csv of scientific and common names for species and links
@@ -173,9 +86,18 @@ species_reference_table <- read.csv(here::here("data", "species_reference_table.
 dat_count <- dat_count %>% left_join(species_reference_table, by = c("species" = "species_code"))
 ```
 
-### Thank you for your participation in the North American Bat Monitoring Program (NABat)! 
+### `r `print(params$agency, this_year, "NABat Results")`
 
-### <span style="color: darkblue;"> __`r (dat_count %>% dplyr::filter(year == this_year, pres_abs == "X") %>% group_by(year) %>% summarise(n = n_distinct(species)) %>% dplyr::pull(n))` bat species were detected in 2021__ across all survey locations in this report. Read on to learn more about which species were found where. </span>
+***
+
+## __Methods__
+
+In `r this_year`, the `r params$agency` implemented acoustic bat monitoring protocols described in A Plan for the North American Bat Monitoring Program (NABat). Stationary detectors were deployed within GRTS Cells `r report_grts` for four consecutive nights each. The results of the stationary detectors are presented here. A Wildlife Acoustics SM4 was used to record full-spectrum echolocation files. Figure \ref{fig:map} shows the location of each detector within the cell, and Figure 2 shows the habitat at each site.
+
+The resulting recording files were sent to Bat Conservation International (BCI) for identification of species presence. Data was checked, renamed, and attributed using a custom R and Python code developed by Conservation Metrics Inc (CMI) and the United States Geological Survey (USGS). Files were then scrubbed of noise using Sonobat Data Wizard 4.4. Sonobatch was used in Sonobat 4.4 set to the `r params$classifier` to determine call parameters and the suggested species identification. Files were then run through Kaleidoscope Pro 5.3.9, set to the `r params$kpro_region` region, to provide additional automated identification used in manual vetting. Based on species range maps from Bat Conservation International (https://www.batcon.org/about-bats/bat-profiles) and BatAMP (https://visualize.batamp.databasin.org/presence), `r params$methods` Sonobat 4.4 was then used to manually identify files.
+
+We attempted to confirm the identification of a maximum of three files per species, per night, per site by visually inspecting the species ID proposed by Sonobat 4.4. Up to 10 files per species-site-night were reviewed in an attempt to confirm the species ID of 3 files.
+Review options included a) confirming species as assigned by the program; 2) assigning the file to a species couplet, or frequency category based on the frequency and call shape (Table 1); or 3) assigning the files as noise, i.e., not a recording of bat echolocation calls. We reviewed files in order of confidence in identification as expressed by the program. A confirmed identification of a species in 1 or more files on a given night at a given site resulted in a designation of species presence for that site-night. Identification of up to three files added an additional measure of confidence to species presence designations. When we could not assign any files recorded on a site-night to species, that species was considered “not detected.”
 
 ***
 
@@ -189,12 +111,26 @@ margin: auto;
 }
 </style>
 
-```{r Map}
-# option to spit out .kml
-
+```{r Map, fig.cap="\\label{fig:map}Map of surveyed locations"}
 map <- make_map(all_dat, dat_count)
-map
+unlink(here::here("geojson_files"), recursive = T) 
+dir.create(here::here("geojson_files"))
+sf::st_write(map[[2]], dsn = here::here("geojson_files", paste0("grts_boundaries_", Sys.Date(), ".geojson")), layer = "grts_boundaries.geojson", delete_dsn = T, quiet=T)
+sf::st_write(map[[3]], dsn = here::here("geojson_files",  paste0("site_locs_", Sys.Date(), ".geojson")), layer = "site_locs.geojson", delete_dsn = T, quiet=T)
+map[[1]]
 ```
+
+***
+
+## __Results__
+
+```{r}
+total_species <- dat_count %>% dplyr::filter(year == this_year, pres_abs == "X") %>% group_by(year) %>% summarise(n = n_distinct(species)) %>% dplyr::pull(n)
+```
+
+In `r `this_year`, we confirmed the presence of `r `total_species` bat species (Table 2). `r params$observations`
+
+The 2021 metadata is presented in Appendix 2.
 
 ***
 
@@ -278,30 +214,85 @@ species_table_all_time %>%
 
 ***
 
-## __Photos of Species Detected__
+## __Site Photos__
 
-Click on the links below to learn more about the species have been detected at these sites to date.
+```{r}
+# load function to pull photos from NABat AWS webserver
+source(here::here("src","site_photos.R"))
+# run function for all survey events and store outputs
+photo_queries <- sa_survey_df %>% dplyr::select(project_id, survey_id, survey_event_id) %>% distinct()
+pics=list()
+for (i in seq(1, nrow(photo_queries))){
+  proj_id = photo_queries[i,1]
+  surv_num = photo_queries[i,2]
+  surv_id = photo_queries[i,3]
+  photos_out = get_site_photos(proj_id, surv_num, surv_id)
+  pics = append(pics, list(photos_out))
+}
+```
 
-```{r Species Photos}
+```{r}
+# delete site_photos folder from previous reports generated
+unlink(here::here("site_photos"), recursive = T) 
 
-# site photos?
+# create folders for each survey site and put the relevant photos into them
+for (i in seq(1, length(pics))){
+  grts <- sa_survey_df[i,]$grts_cell_id
+  loc <- sa_survey_df[i,]$event
+  dir.create(here::here("site_photos", grts, loc), recursive=T)
+  for (pic in seq(1, length(pics[[i]]))){
+    photo <- pics[[i]][pic]
+    path <- here::here("site_photos", grts, loc, paste0(pic, ".jpg"))
+    photo <- image_scale(photo, "350x350!")
+    image_write(photo, path)
+  }
+}
 
-# species_ref_list <- unique(species_reference_table$species_code)
-# 
-# photos <- dat_count %>% 
-#   dplyr::filter(pres_abs == "X") %>%
-#   dplyr::group_by(species) %>% 
-#   dplyr::distinct(species) %>% 
-#   dplyr::summarise(photo = case_when(
-#     species %in% species_ref_list ~ sprintf("![](../images/%s.jpg)", species),
-#     !species %in% species_ref_list ~ "no photo available"
-#   )) %>% 
-#   left_join(species_reference_table, by = c("species" = "species_code")) %>% 
-#   mutate(species_full_name = cell_spec(species_full_name, 'html', link = species_url)) %>% 
-#   dplyr::select(species_full_name, photo) %>% 
-#   dplyr::rename("Species" = species_full_name, "Photo" = photo)
-#   
-# kable(photos, "html", escape = FALSE) 
+# get paths to photos
+files <- list.files(path = here::here("site_photos"),
+                    pattern = "^.*.jpg$",
+                    full.names = T,
+                    recursive = T)
+files_short <- list.files(path = here::here("site_photos"),
+                    pattern = "^.*.jpg$",
+                    full.names = F,
+                    recursive = T)
+
+# organize paths by GRTS cell
+photo_grts <- as.character(report_grts)
+grts_short_photo_paths <- list()
+grts_long_photo_paths <- list()
+for(g in photo_grts){
+  long_paths <- files %>% str_subset(pattern = g)
+  short_paths <- files_short %>% str_subset(pattern = g)
+  grts_short_photo_paths <- append(grts_short_photo_paths, list(short_paths))
+  grts_long_photo_paths <- append(grts_long_photo_paths, list(long_paths))
+}
+
+# create captions for photos
+cells <- list()
+sites <- list()
+captions <- list()
+for (i in seq(1, length(report_grts))){
+  c <- grts_short_photo_paths[[i]] %>% strsplit( "/" ) %>% sapply( "[", 1 )
+  s <- grts_short_photo_paths[[i]] %>% strsplit( "/" ) %>% sapply( "[", 2 )
+  caps <- str_c("NABat Cell ", c, "; Survey Site: ", s, sep = "")
+  cells <- append(cells, list(c))
+  sites <- append(sites, list(s))
+  captions <- append(captions, list(caps))
+}
+```
+
+```{r, results='asis', eval=TRUE}
+# print photos under expandable GRTS cell labels
+for (i in seq(1, length(grts_long_photo_paths))){
+  cat("<details>\n")
+  cat(sprintf("<summary>Click to View Site Photos for GRTS %s</summary>\n", report_grts[i]))
+  for(j in seq(1, length(grts_long_photo_paths[[i]]))){
+    cat(sprintf('![%s](%s)\n', captions[[i]][j], grts_long_photo_paths[[i]][j]), sep = '\n')
+  }
+  cat("</details>\n\n")
+}
 ```
 
 ***
@@ -311,9 +302,7 @@ Click on the links below to learn more about the species have been detected at t
 Number of bat species confirmed at each site in each year of surveying. 
 
 ```{r Species Count Table}
-
 #tally of species by site
-
 species_count <- dat_count %>% 
   dplyr::filter(pres_abs == "X") %>% 
   dplyr::group_by(grts_cell_id, location_name, year) %>% 
@@ -360,52 +349,11 @@ survey_dates %>% flextable() %>%
 
 ***
 
-## __Bat Activity__
+## __Example Sonograms__
 
-The following bar chart gives a sense of when bats were active at these sites this past summer, as it shows the number of bat recordings captured during each hour of the day. Note that this is a total count that includes all survey nights at all survey sites in this report.  
+```{r}
 
-```{r Bat Activity Bar Chart}
-# all_dat$recording_time <- lubridate::parse_date_time(all_dat$recording_time, orders = "ymd HMS")
-# all_dat$time <- format(as.POSIXct(all_dat$recording_time),format = "%I %p")
-# all_dat$time <- factor(all_dat$time, levels = c("12 PM", "01 PM", "02 PM", "03 PM", "04 PM", "05 PM", "06 PM", "07 PM", "08 PM", "09 PM", "10 PM", "11 PM", "12 AM", "01 AM", "02 AM", "03 AM", "04 AM", "05 AM", "06 AM", "07 AM", "08 AM", "09 AM", "10 AM", "11 AM"))
-# 
-# 
-# call_times <- all_dat %>%
-#   dplyr::filter(., grepl(this_year, recording_night)) %>% 
-#   ggplot(., aes(time, group = 1)) +
-#   geom_bar(stat = 'count', fill = "blue") +
-#   scale_x_discrete(drop=FALSE) +
-#   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-#   xlab("") +
-#   ylab("Count of Bat Calls") +
-#   facet_wrap(grts_cell_id ~ location_name, ncol = 2)
-# 
-# call_times
 ```
-
-***
-
-## __Background__
-
-Our region’s bats face unprecedented threats, including widespread habitat alteration and destruction, climate change and drought, and the arrival and spread of a deadly fungal disease called White-nose Syndrome. Yet little is known about the current abundance and distribution of most US bat species. NABat brings together a diverse and extensive network of partners in collecting data to assess the status and trends of bat populations throughout North America to inform the conservation and management of bats. Participation by private landowners is critical to the success of effective bat population monitoring in our region as many of our highest priority survey locations occur on private land. 
-
-There are over 1,400 bat species in the world, with California and Nevada being home to 25. Our region’s bats play important ecological roles that are vital to the health of our natural ecosystems and our human economies. Scientists estimate that insect-eating bats may save U.S. farmers roughly $23 billion each year by reducing crop damage and limiting the need for pesticides, as they eat up to half of their body weight in insects each night.
-
-Bats are difficult to observe and identify because they are most active at night and roost in small spaces. However, using “bat acoustic detectors”, we can record the echolocation calls of bats as they travel and forage for food during the night. The recordings can then be used to identify the species of the bats present in an area. 
-
-***
-
-## __Methods__
-
-NABat divides North America into a grid of 10 x 10 km squares and randomly assigns a priority ranking to every square, which is used to determine which areas to target for surveying. Exact survey locations within the 10 x 10 km squares are then selected by biologists to target areas with high expected bat activity. Bat acoustic detectors are placed near landscape features that may attract bats, such as water, dead trees, barns, open space, and forest edges. 
-
-The detectors are deployed to record for four consecutive nights. Once collected, the recorded echolocation calls are identified to the species level using auto-identification software and suspected species are then confirmed through expert review by Bat Conservation International staff. Data are then contributed to the NABat database and used to estimate habitat occupancy and population trends to guide wildlife management efforts.
-
-Below is an example sonogram that shows a string of bat pulses. A sonogram is a graph of the frequency of sound emitted over time. Bats typically emit calls at very high frequencies. So high, that in many cases, their calls can't be heard by the human ear. Looking at the sonograms of bat echolocation sequences allows us to "hear" with our eyes. Below is the echolocation sequence of a hoary bat (*Lasiurus cinereus*). You can see each echolocation pulse made by the bat as a colored streak on the sonogram. 
-
-<p align="center">
-<img width="650" src="../images/LACI example sonogram.jpg">
-</p>
 
 ***
 
@@ -429,4 +377,3 @@ You can report bat colonies and bat roosting sites to the California Department 
 <p align="center">
 <img width="400" src="../images/BCI_logo.png">
 </p>
-
