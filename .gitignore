@@ -9,4 +9,4 @@ geojson_files/
 my_photo.jpg
 site_photos
 site_photos/
-
+*.xlsx
