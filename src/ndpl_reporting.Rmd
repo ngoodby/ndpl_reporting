@@ -357,15 +357,9 @@ survey_dates %>% flextable() %>%
 
 ## __Example Sonograms__
 
-NABat divides North America into a grid of 10 x 10 km squares and randomly assigns a priority ranking to every square, which is used to determine which areas to target for surveying. Exact survey locations within the 10 x 10 km squares are then selected by biologists to target areas with high expected bat activity. Bat acoustic detectors are placed near landscape features that may attract bats, such as water, dead trees, barns, open space, and forest edges. 
+```{r}
 
-The detectors are deployed to record for four consecutive nights. Once collected, the recorded echolocation calls are identified to the species level using auto-identification software and suspected species are then confirmed through expert review by Bat Conservation International staff. Data are then contributed to the NABat database and used to estimate habitat occupancy and population trends to guide wildlife management efforts.
-
-Below is an example sonogram that shows a string of bat pulses. A sonogram is a graph of the frequency of sound emitted over time. Bats typically emit calls at very high frequencies. So high, that in many cases, their calls can't be heard by the human ear. Looking at the sonograms of bat echolocation sequences allows us to "hear" with our eyes. Below is the echolocation sequence of a hoary bat (*Lasiurus cinereus*). You can see each echolocation pulse made by the bat as a colored streak on the sonogram. 
-
-<p align="center">
-<img width="650" src="../images/LACI example sonogram.jpg">
-</p>
+```
 
 ***
 
