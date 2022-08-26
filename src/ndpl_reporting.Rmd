@@ -220,43 +220,6 @@ species_table_all_time %>%
 
 ***
 
-```{r}
-# UPDATE
-
-species_table_by_night <- dat_count %>%
-  dplyr::filter(pres_abs == "X", year == this_year) %>% 
-   mutate(common_name = case_when(
-    is.na(common_name) ~ species,
-    !is.na(common_name) ~ common_name)) %>%
-  pivot_wider(., id_cols = common_name,
-              names_from = c(location_name, grts_cell_id),
-              values_from = year, 
-              names_glue = "NABat Cell {grts_cell_id};{location_name}") %>% 
-  map_df(., ~ gsub("[:]", ", ", .x)) %>%
-  map_df(., ~gsub("[c(]", "", .x)) %>% 
-  map_df(., ~gsub("[)]", "", .x)) %>% 
-  dplyr::rename("Species" = common_name) 
-
-species_table_names <- names(species_table_all_time) 
-species_table_grts_names <- gsub(";.*", "", species_table_names)
-species_table_location_names <- gsub(".*;", "", species_table_names)
-
-species_table_all_time[ species_table_all_time == "NULL"] <- "Not detected"
-
-species_table_all_time %>% 
-  flextable(col_keys = names(.)) %>% 
-  delete_part(part = "header") %>% 
-  add_header_row(values = species_table_location_names) %>% 
-  add_header_row(values = species_table_grts_names) %>% 
-  merge_h(part = "header") %>% 
-  merge_v(part = "header") %>% 
-  theme_box() %>% 
-  flextable::align(., align = "center", part = "all") %>%
-  set_table_properties(., width = 1, layout = "autofit") %>% 
-  set_caption("This table shows which years each bat species was detected at each location.")
-```
-
-
 ## __Site Photos__
 
 ```{r}
@@ -403,15 +366,6 @@ Below is an example sonogram that shows a string of bat pulses. A sonogram is a 
 <p align="center">
 <img width="650" src="../images/LACI example sonogram.jpg">
 </p>
-
-***
-
-## __Metadata__
-
-```{r}
-library(readxl)
-metadata <- read_excel(here::here("data", "NDPL_Stationary_Acoustic_Metadata.xlsx")) %>% select()
-```
 
 ***
 
