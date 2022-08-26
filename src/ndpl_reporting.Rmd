@@ -68,7 +68,7 @@ knitr::opts_chunk$set(echo = FALSE,
 ```{r NABat API, results = 'hide'}
 username = 'ngoodby@batcon.org'
 password = '3%0T47ICp%cU'
-report_grts = 106
+report_grts = c(106,2858)
 project_id = 353
 report_locations = ""
 
@@ -225,28 +225,51 @@ for (i in seq(1, length(pics))){
   }
 }
 
-#get paths to photos
-files <- list.files(path = here::here("site_photos"), 
+# get paths to photos
+files <- list.files(path = here::here("site_photos"),
                     pattern = "^.*.jpg$",
                     full.names = T,
                     recursive = T)
-short_path <- list.files(path = here::here("site_photos"), 
+files_short <- list.files(path = here::here("site_photos"),
                     pattern = "^.*.jpg$",
                     full.names = F,
                     recursive = T)
 
-#create captions for photos
-cells <- short_path %>% strsplit( "/" ) %>% sapply( "[", 1 )
-sites <-  short_path %>% strsplit( "/" ) %>% sapply( "[", 2 )
-captions <- str_c("NABat Cell ", cells, "; Survey Site: ", sites, sep = "")
+# organize paths by GRTS cell
+photo_grts <- as.character(report_grts)
+grts_short_photo_paths <- list()
+grts_long_photo_paths <- list()
+for(g in photo_grts){
+  long_paths <- files %>% str_subset(pattern = g)
+  short_paths <- files_short %>% str_subset(pattern = g)
+  grts_short_photo_paths <- append(grts_short_photo_paths, list(short_paths))
+  grts_long_photo_paths <- append(grts_long_photo_paths, list(long_paths))
+}
+
+# create captions for photos
+cells <- list()
+sites <- list()
+captions <- list()
+for (i in seq(1, length(report_grts))){
+  c <- grts_short_photo_paths[[i]] %>% strsplit( "/" ) %>% sapply( "[", 1 )
+  s <- grts_short_photo_paths[[i]] %>% strsplit( "/" ) %>% sapply( "[", 2 )
+  caps <- str_c("NABat Cell ", c, "; Survey Site: ", s, sep = "")
+  cells <- append(cells, list(c))
+  sites <- append(sites, list(s))
+  captions <- append(captions, list(caps))
+}
 ```
 
-<details>
-  <summary>Click to View Site Photos</summary>
-    ```{r, results='asis', eval=TRUE}
-    cat(sprintf('![%s](%s)\n', captions, files), sep = '\n')
-    ```
-</details> 
+```{r, results='asis', eval=TRUE}
+for (i in seq(1, length(grts_long_photo_paths))){
+  cat("<details>\n")
+  cat(sprintf("<summary>Click to View Site Photos for GRTS %s</summary>\n", report_grts[i]))
+  for(j in seq(1, length(grts_long_photo_paths[[i]]))){
+    cat(sprintf('![%s](%s)\n', captions[[i]][j], grts_long_photo_paths[[i]][j]), sep = '\n')
+  }
+  cat("</details>\n\n")
+}
+```
 
 ***
 
