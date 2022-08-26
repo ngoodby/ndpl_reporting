@@ -1,47 +1,9 @@
-make_map <- function(all_dat, dat_count){
-  #' @title Make Map
-  #'
-  #' @description Generate map of relevant GRTS and survey sites.
-  #' 
-
-  #bringing in GRTS shapefile
-  load(paste0(here::here(), "/data/grts.grid.rda"))
-  grts_mapping <- grts.grid %>% 
-    st_as_sf() %>%
-    dplyr::filter(GRTS_ID %in% dat_count$grts_cell_id) %>% 
-    dplyr::filter(country == "US")
-
-  #sf object of site locations to use to write 
-  site_locs <- all_dat %>% 
-    dplyr::distinct(grts_cell_id, location_name, latitude, longitude) %>% 
-    dplyr::group_by(grts_cell_id, location_name) %>% 
-    dplyr::summarise(latitude = mean(latitude),
-                     longitude = mean(longitude)) %>% 
-    dplyr::mutate(country = "US") %>% 
-    sf::st_as_sf(coords = c("longitude","latitude")) %>% 
-    dplyr::filter(grts_cell_id %in% dat_count$grts_cell_id)
-  
-  #plotting survey sites
-  sites <- all_dat %>% 
-    dplyr::distinct(grts_cell_id, location_name, latitude, longitude) %>% 
-    dplyr::group_by(grts_cell_id, location_name) %>% 
-    dplyr::summarise(latitude = mean(latitude),
-                     longitude = mean(longitude)) %>% 
-    dplyr::mutate(country = "US") %>% 
-    leaflet() %>% 
-    addProviderTiles("Esri.WorldTopoMap") %>% 
-    addPolygons(data = grts_mapping, label = ~paste("NABat Cell ", GRTS_ID), fillOpacity = 0, weight = 2) %>% 
-    addCircleMarkers(lat = ~latitude, lng = ~longitude, weight = 1, label = ~paste("Survey Site Name:", location_name))
-  return(list(sites, grts_mapping, site_locs))
-}
-
-
 load_nabat_data <- function(username, password, project_id, report_grts){
   #' @title Load NABat Data
   #'
   #' @description Load and clean data
   #' 
-
+  
   exclude <- c("LACITABR", "LANOTABR","LABLPAHE", "LABOPESU", "EUMAEUPE","EUMAIDPH", "MYCAMYYU", "MYEVMYTH",
                "MYLUMYVO", "EPFULANO", "Q10k", "Q15k", "Q20k", "Q25k", "Q40k", "40kMyo", "40k", "Q50k", 
                "LACITABR,HiF", "Q25k,MYCAMYYU", "Q25k,HiF", "Q40k,Q25k", "Q40k,LoF", "MY40", "Social", "25K", 
@@ -71,10 +33,10 @@ load_nabat_data <- function(username, password, project_id, report_grts){
                                 year = 'all')
   token = get_refresh_token(token)
   species_df = get_species(token = token)
-  all_dat <- left_join(sa_bulk_df, species_df, by = c("manual_id" = "id"))
+  all_dat <- left_join(sa_bulk_df, species_df, by = c("manual_id" = "id"), keep=F)
   all_dat$survey_event_id <- as.numeric(all_dat$survey_event_id)
   sa_survey_df$survey_event_id <- as.numeric(sa_survey_df$survey_event_id)
-  all_dat <- left_join(all_dat, sa_survey_df, keep = FALSE) %>% 
+  all_dat <- left_join(all_dat, sa_survey_df, keep=F) %>% 
     mutate(year = lubridate::year(recording_night))
   if (report_locations[1] != ""){
     all_dat <- all_dat %>% mutate(year = lubridate::year(recording_night)) %>% 

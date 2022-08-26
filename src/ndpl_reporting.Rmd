@@ -17,6 +17,7 @@ params:
   kpro_region: NA
   methods: NA
   observations: NA
+  ForestID: NA
 ---
 
 <img width="100" src="../images/NABat_logo.png">
@@ -61,6 +62,7 @@ knitr::opts_chunk$set(echo = FALSE,
   library(magick)
   library(webshot)
   library(reticulate)
+  library(googlesheets4)
 ```
 
 ```{r NABat API, results = 'hide'}
@@ -73,22 +75,22 @@ project_id = 353
 report_locations = ""
 params$agency = "Tahoe National Forest"
 
-source(here::here("src", "functions.R"))
+source(here::here("src", "load_nabat_data_function.R"))
 data <- load_nabat_data(username, password, project_id, report_grts)
 all_dat <- data[[1]]
 dat_count <- data[[2]]
 sa_survey_df <- data[[3]]
 this_year = max(all_dat$year)
-# this_year <- format(Sys.Date(), "%Y")
 ```
 
 ```{r}
 #joining csv of scientific and common names for species and links
 species_reference_table <- read.csv(here::here("data", "species_reference_table.csv"))
-dat_count <- dat_count %>% left_join(species_reference_table, by = c("species" = "species_code"))
-
-# correct for join
-all_dat <- all_dat %>% left_join(species_reference_table, by = c("species_code" = "species_code"), keep=F)
+dat_count <- dat_count %>% left_join(species_reference_table, by = c("species" = "species_code"), keep=F)
+all_dat <- all_dat %>% left_join(species_reference_table, 
+                                 by = c("species_code" = "species_code", 
+                                        "species_code_6"="species_code_6"), keep=F) %>% 
+  mutate("common_name" = common_name.y) %>% dplyr::select(-common_name.x, -common_name.y)
 ```
 
 ### `r `print(params$agency, this_year, "NABat Results")`
@@ -97,9 +99,24 @@ all_dat <- all_dat %>% left_join(species_reference_table, by = c("species_code" 
 
 ## __Methods__
 
+```{r}
+lookup_t <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/1UggTTGxYYmVM2FVpjHqn-q0AZLb-oqGKlJytg7r5JXg/edit?usp=sharing')
+forest_id <- params$ForestID
+# forest_id <- "Bridger-TetonNF"
+classifier <- lookup_t %>% filter(ForestID==forest_id) %>% pull(Species_List)
+kpro_region <- lookup_t %>% filter(ForestID==forest_id) %>% pull(Kal_Classifier)
+added_species <- lookup_t %>% filter(ForestID==forest_id) %>% pull(Kal_addspp) %>% 
+  as_tibble() %>% separate_rows(.,1,sep = ",") %>% mutate("value" = str_trim(.$value)) %>% 
+  left_join(., species_reference_table, by=c("value" = "species_code_6")) %>% pull(common_name)
+subtracted_species <- lookup_t %>% filter(ForestID==forest_id) %>% pull(Kal_subtrspp) %>% 
+  as_tibble() %>% separate_rows(.,1,sep = ",") %>% mutate("value" = str_trim(.$value)) %>% 
+  left_join(., species_reference_table, by=c("value" = "species_code_6")) %>% pull(common_name)
+```
+
+
 In `r this_year`, the `r params$agency` implemented acoustic bat monitoring protocols described in A Plan for the North American Bat Monitoring Program (NABat). Stationary detectors were deployed within GRTS Cells `r report_grts` for four consecutive nights each. The results of the stationary detectors are presented here. A Wildlife Acoustics SM4 was used to record full-spectrum echolocation files. Figure \ref{fig:map} shows the location of each detector within the cell, and Figure 2 shows the habitat at each site.
 
-The resulting recording files were sent to Bat Conservation International (BCI) for identification of species presence. Data was checked, renamed, and attributed using a custom R and Python code developed by Conservation Metrics Inc (CMI) and the United States Geological Survey (USGS). Files were then scrubbed of noise using Sonobat Data Wizard 4.4. Sonobatch was used in Sonobat 4.4 set to the `r params$classifier` to determine call parameters and the suggested species identification. Files were then run through Kaleidoscope Pro 5.3.9, set to the `r params$kpro_region` region, to provide additional automated identification used in manual vetting. Based on species range maps from Bat Conservation International (https://www.batcon.org/about-bats/bat-profiles) and BatAMP (https://visualize.batamp.databasin.org/presence), `r params$methods` Sonobat 4.4 was then used to manually identify files.
+The resulting recording files were sent to Bat Conservation International (BCI) for identification of species presence. Data was checked, renamed, and attributed using a custom R and Python code developed by Conservation Metrics Inc (CMI) and the United States Geological Survey (USGS). Files were then scrubbed of noise using Sonobat Data Wizard 4.4. Sonobatch was used in Sonobat 4.4 set to the `r classifier` to determine call parameters and the suggested species identification. Files were then run through Kaleidoscope Pro 5.3.9, set to the `r kpro_region` region, to provide additional automated identification used in manual vetting. Based on species range maps from Bat Conservation International (https://www.batcon.org/about-bats/bat-profiles) and BatAMP (https://visualize.batamp.databasin.org/presence), `r added_species` `r subtracted_species` Sonobat 4.4 was then used to manually identify files.
 
 We attempted to confirm the identification of a maximum of three files per species, per night, per site by visually inspecting the species ID proposed by Sonobat 4.4. Up to 10 files per species-site-night were reviewed in an attempt to confirm the species ID of 3 files.
 Review options included a) confirming species as assigned by the program; 2) assigning the file to a species couplet, or frequency category based on the frequency and call shape (Table 1); or 3) assigning the files as noise, i.e., not a recording of bat echolocation calls. We reviewed files in order of confidence in identification as expressed by the program. A confirmed identification of a species in 1 or more files on a given night at a given site resulted in a designation of species presence for that site-night. Identification of up to three files added an additional measure of confidence to species presence designations. When we could not assign any files recorded on a site-night to species, that species was considered “not detected.”
@@ -117,6 +134,7 @@ margin: auto;
 </style>
 
 ```{r Map, fig.cap="\\label{fig:map}Map of surveyed locations"}
+source(here::here("src", "map_function.R"))
 map <- make_map(all_dat, dat_count)
 unlink(here::here("geojson_files"), recursive = T) 
 dir.create(here::here("geojson_files"))
@@ -357,9 +375,26 @@ survey_dates %>% flextable() %>%
 ## __Example Sonograms__
 
 ```{r}
-
+species_ref_list <- unique(species_reference_table$species)
+sonograms <- dat_count %>% 
+  dplyr::filter(pres_abs == "X") %>%
+  dplyr::group_by(species, species_scientific) %>% 
+  dplyr::distinct(species, species_scientific) %>% 
+  dplyr::summarise(sgram = case_when(
+    species %in% species_ref_list ~ sprintf("![](../sonograms/%s.jpg)", species),
+    !species %in% species_ref_list ~ "no sonogram available"
+  ))
 ```
 
+```{r, results='asis', eval=TRUE}
+# print photos under expandable GRTS cell labels
+for (i in seq(1, nrow(sonograms))){
+  cat("<details>\n")
+  cat(sprintf("<summary>Click to View Site Example Sonogram for %s</summary>\n", sonograms[i,]$species_scientific))
+  cat(sprintf('![%s](%s)\n', sonograms[i,]$species_scientific, sonograms[i,]$sgram), sep = '\n')
+  cat("</details>\n\n")
+}
+```
 ***
 
 ## __Learn More__
