@@ -381,7 +381,7 @@ sonograms <- dat_count %>%
   dplyr::group_by(species, species_scientific) %>% 
   dplyr::distinct(species, species_scientific) %>% 
   dplyr::summarise(sgram = case_when(
-    species %in% species_ref_list ~ sprintf("![](../sonograms/%s.jpg)", species),
+    species %in% species_ref_list ~ sprintf("![](../sonograms/%s_sgram.jpg)", species),
     !species %in% species_ref_list ~ "no sonogram available"
   ))
 ```
