@@ -65,6 +65,14 @@ knitr::opts_chunk$set(echo = FALSE,
   library(googlesheets4)
 ```
 
+```{r}
+report_grts <- params$grts %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both")) %>% as.numeric()
+report_locations <- params$locations %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both"))
+username = params$username
+password = params$password
+project_id = params$project %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both")) %>% as.numeric()
+```
+
 ```{r NABat API, results = 'hide'}
 # make it so you can make report for all grts in a project
 
