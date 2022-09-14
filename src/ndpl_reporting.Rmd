@@ -61,6 +61,7 @@ knitr::opts_chunk$set(echo = FALSE,
   library(webshot)
   library(reticulate)
   library(googlesheets4)
+  library(readxl)
 ```
 
 ```{r parameters}
@@ -93,11 +94,15 @@ this_year = max(all_dat$year)
 ```{r}
 #joining csv of scientific and common names for species and links
 species_reference_table <- read.csv(here::here("data", "species_reference_table.csv"))
+detector_codes <- read_excel(here::here("data", "detector_id_values.xlsx"))
+mic_codes <- read_excel(here::here("data","mic_id_values.xlsx"))
 dat_count <- dat_count %>% left_join(species_reference_table, by = c("species" = "species_code"), keep=F)
 all_dat <- all_dat %>% left_join(species_reference_table, 
                                  by = c("species_code" = "species_code", 
                                         "species_code_6"="species_code_6"), keep=F) %>% 
-  mutate("common_name" = common_name.y) %>% dplyr::select(-common_name.x, -common_name.y)
+  mutate("common_name" = common_name.y) %>% dplyr::select(-common_name.x, -common_name.y) %>% 
+  left_join(detector_codes, by = c("detector_type_id"="id")) %>% 
+  left_join(mic_codes, by = c("microphone_type_id"="id"))
 current_year <- as.character(this_year)
 ```
 
@@ -115,8 +120,6 @@ added_species <- lookup_t %>% filter(ForestID==forest_id) %>% pull(Kal_addspp) %
 subtracted_species <- lookup_t %>% filter(ForestID==forest_id) %>% pull(Kal_subtrspp) %>% 
   as_tibble() %>% separate_rows(.,1,sep = ",") %>% mutate("value" = str_trim(.$value)) %>% 
   left_join(., species_reference_table, by=c("value" = "species_code_6")) %>% pull(common_name)
-
-# detector <- all_dat %>% filter(year == this_year) %>% {unique(.$detector_type_id)} %>% as.list()
 ```
 
 In `r this_year`, the `r partner` implemented acoustic bat monitoring protocols described in _A Plan for the North American Bat Monitoring Program (NABat)_. Stationary detectors were deployed within GRTS Cells `r report_grts` for four consecutive nights each. The results of the stationary detectors are presented here. was used to record full-spectrum echolocation files. Figure \ref{fig:map} shows the location of each detector within the cell, and Figure 2 shows the habitat at each site.
@@ -176,7 +179,7 @@ for (i in seq(1, nrow(photo_queries))){
 
 ```{r}
 # delete site_photos folder from previous reports generated
-unlink(here::here("site_photos"), recursive = T) 
+unlink(here::here("site_photos"), recursive = T))
 
 # create folders for each survey site and put the relevant photos into them
 for (i in seq(1, length(pics))){
