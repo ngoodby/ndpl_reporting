@@ -20,13 +20,6 @@ params:
 
 <img width="100" src="../images/NABat_logo.png">
 
-```{r}
-# table <- read_csv(here::here("data","species_reference_table.csv"))
-# table_test <- separate(table, freq_range, into=c("low_freq","high_freq"), sep = "-", remove=T)
-# write_csv(table_test, here::here("data", ""))
-```
-
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE,
                       warning = FALSE,
@@ -82,12 +75,12 @@ forest_id <- params$forest_id
 ```
 
 ```{r NABat API, results = 'hide'}
-# username = 'ngoodby@batcon.org'
-# password = '3%0T47ICp%cU'
-# report_grts = c(106,2858)
-# project_id = 353
-# report_locations = ""
-# forest_id <- "Bridger-TetonNF"
+username = 'ngoodby@batcon.org'
+password = '3%0T47ICp%cU'
+report_grts = c(106,2858)
+project_id = 353
+report_locations = ""
+forest_id <- "Bridger-TetonNF"
 
 source(here::here("src", "load_nabat_data_function.R"))
 data <- load_nabat_data(username, password, project_id, report_grts, report_locations)
@@ -123,10 +116,10 @@ subtracted_species <- lookup_t %>% filter(ForestID==forest_id) %>% pull(Kal_subt
   as_tibble() %>% separate_rows(.,1,sep = ",") %>% mutate("value" = str_trim(.$value)) %>% 
   left_join(., species_reference_table, by=c("value" = "species_code_6")) %>% pull(common_name)
 
-detector <- all_dat %>% filter(year == this_year) %>% {unique(.$detector_type_id)} %>% as.list()
+# detector <- all_dat %>% filter(year == this_year) %>% {unique(.$detector_type_id)} %>% as.list()
 ```
 
-In `r this_year`, the `r partner` implemented acoustic bat monitoring protocols described in _A Plan for the North American Bat Monitoring Program (NABat)_. Stationary detectors were deployed within GRTS Cells `r report_grts` for four consecutive nights each. The results of the stationary detectors are presented here. `r detector` was used to record full-spectrum echolocation files. Figure \ref{fig:map} shows the location of each detector within the cell, and Figure 2 shows the habitat at each site.
+In `r this_year`, the `r partner` implemented acoustic bat monitoring protocols described in _A Plan for the North American Bat Monitoring Program (NABat)_. Stationary detectors were deployed within GRTS Cells `r report_grts` for four consecutive nights each. The results of the stationary detectors are presented here. was used to record full-spectrum echolocation files. Figure \ref{fig:map} shows the location of each detector within the cell, and Figure 2 shows the habitat at each site.
 
 The resulting recording files were sent to Bat Conservation International (BCI) for identification of species presence. Data was checked, renamed, and attributed using a custom R and Python code developed by Conservation Metrics Inc (CMI) and the United States Geological Survey (USGS). Files were then scrubbed of noise using Sonobat Data Wizard 4.4. Sonobatch was used in Sonobat 4.4 set to the `r classifier` to determine call parameters and the suggested species identification. Files were then run through Kaleidoscope Pro 5.3.9, set to the `r kpro_region` region, to provide additional automated identification used in manual vetting. Based on species range maps from Bat Conservation International (https://www.batcon.org/about-bats/bat-profiles) and BatAMP (https://visualize.batamp.databasin.org/presence), `r added_species` `r subtracted_species`. Sonobat 4.4 was then used to manually identify files.
 
@@ -259,62 +252,20 @@ The 2021 metadata is presented in Appendix 2.
 
 ![Species that may occur in jurisdiction of the `r partner` and the specific and general categories in which they are included. ](`r table_path`)
 
-***
-
-# __Results__
-
-## Bat species confirmed in `r this_year`
-
-```{r Species by Location Table 2021}
-# #CHRISTEN: decide if you like this format and update if needed. 
-# ##need to group by before pivoting; will need to use summarize function
-# species_table_this_year <- all_dat %>% 
-#   dplyr::filter(year == this_year) %>%
-#    #mutate(species_code = case_when(
-#     #is.na(species) ~ species,
-#     # !is.na(species) ~ species)) %>%
-#   pivot_wider(., id_cols = species,
-#               names_from = c(recording_night, location_name, grts_cell_id),
-#               values_from = pres_abs,
-#               names_glue = "NABat Cell {grts_cell_id};{location_name};{monitoring_night}") %>% 
-#   #names_sort = TRUE) %>% 
-#   dplyr::rename("Species" = species)
-# 
-# species_table_names <- names(species_table_this_year)
-# species_table_grts_names <- gsub(";.*", "", species_table_names)
-# species_table_location_names <- gsub(".*;", "", species_table_names)
-# species_table_monitoring_night <- gsub(".*;", "", species_table_names)
-# 
-# species_table_this_year %>%
-#   flextable(col_keys = names(.)) %>% 
-#   delete_part(part = "header") %>% 
-#   add_header_row(values= species_table_monitoring_night) %>%
-#   add_header_row(values = species_table_location_names) %>% 
-#   add_header_row(top = TRUE, values = species_table_grts_names) %>% 
-#   merge_h(part = "header") %>% 
-#   merge_v(part = "header") %>% 
-#   theme_box() %>%
-#   flextable::align(., align = "center", part = "all") %>%
-#   set_table_properties(., width = 1, layout = "autofit") %>% 
-#   set_caption("An X indicates that the species was detected; blank if the species was not detected.")
-```
+## Call files confirmed in `r this_year`
 
 ```{r}
-# notes for Christen's task
+exclude <- c("NOISE", NA)
 
-exclude <- c("LACITABR", "LANOTABR","LABLPAHE", "LABOPESU", "EUMAEUPE","EUMAIDPH", "MYCAMYYU", "MYEVMYTH",
-             "MYLUMYVO", "EPFULANO", "Q10k", "Q15k", "Q20k", "Q25k", "Q40k", "40kMyo", "40k", "Q50k", 
-             "LACITABR,HiF", "Q25k,MYCAMYYU", "Q25k,HiF", "Q40k,Q25k", "Q40k,LoF", "MY40", "Social", "25K", 
-             "25k", "NOISE", "LowF", "HighF", "NoID", "LoF", "HiF", "Noise", "MYSP")
-filtered_all_dat <- all_dat %>% dplyr::filter(!species_code %in% exclude) %>%
-    dplyr::filter(nchar(species_code) == 4) %>% 
-    dplyr::filter(!is.na(manual_id)) %>%
-    separate_rows(species_code)
+filtered_all_dat <- all_dat %>% 
+  dplyr::filter(year == this_year) %>% 
+  dplyr::filter(!species_code %in% exclude) %>%
+  separate_rows(species_code)
 
 species_table_this_year <- filtered_all_dat %>% 
-  dplyr::filter(year == this_year & !is.na(species_code)) %>% 
   group_by(grts_cell_id, location_name, recording_night, species_code) %>% 
   summarise(num_confirmed_files = n()) %>% 
+  arrange(., species_code) %>% 
   pivot_wider(names_from = species_code, 
               values_from = num_confirmed_files,
               values_fill = 0) %>% 
@@ -330,7 +281,7 @@ species_table_this_year %>%
 
 ***
 
-## Bat species confirmed all years
+## Bat species confirmed each year
 
 ```{r species all years}
 sub_x <- function(x){
@@ -354,47 +305,18 @@ species_count %>%
   add_header_row(values = as.list(table_names[,1])) %>%
   add_header_row(values = as.list(table_names[,2])) %>%
   merge_h(part = "header") %>%
-  merge_v(part = "header") %>%
   theme_box() %>%
   flextable::align(., align = "center", part = "all") %>%
   set_table_properties(., width = 1, layout = "autofit") %>%
   set_caption("This table shows which years each bat species was detected at each location.")
 ```
 
-```{r Species by Location Table All Time}
-#CHRISTEN: decide if you like this format and update if needed. 
+***
 
-# species_table_all_time <- dat_count %>%
-#   dplyr::filter(pres_abs == TRUE) %>% 
-#    mutate(species_code = case_when(
-#     is.na(species_code) ~ species,
-#     !is.na(species_code) ~ species_code)) %>%
-#   pivot_wider(., id_cols = species_code,
-#               names_from = c(location_name, grts_cell_id, year),
-#               values_from = year, 
-#               names_glue = "NABat Cell {grts_cell_id};{location_name}") %>% 
-#   map_df(., ~ gsub("[:]", ", ", .x)) %>%
-#   map_df(., ~gsub("[c(]", "", .x)) %>% 
-#   map_df(., ~gsub("[)]", "", .x)) %>% 
-#   dplyr::rename("Species" = species_code) 
-# 
-# species_table_names <- names(species_table_all_time) 
-# species_table_grts_names <- gsub(";.*", "", species_table_names)
-# species_table_location_names <- gsub(".*;", "", species_table_names)
-# 
-# species_table_all_time[ species_table_all_time == "NULL"] <- "Not detected"
-# 
-# species_table_all_time %>% 
-#   flextable(col_keys = names(.)) %>% 
-#   delete_part(part = "header") %>% 
-#   add_header_row(values = species_table_location_names) %>% 
-#   add_header_row(values = species_table_grts_names) %>% 
-#   merge_h(part = "header") %>% 
-#   merge_v(part = "header") %>% 
-#   theme_box() %>% 
-#   flextable::align(., align = "center", part = "all") %>%
-#   set_table_properties(., width = 1, layout = "autofit") %>% 
-#   set_caption("This table shows which years each bat species was detected at each location.")
+# __Metadata__
+
+```{r}
+
 ```
 
 ***
@@ -402,29 +324,6 @@ species_count %>%
 # __Survey Dates__
 
 ```{r}
-# CHRISTEN: show all years of survey dates. include detector make/model, lat/long.
-
-# survey_dates <- all_dat %>% 
-#   dplyr::filter(grepl(all_year, recording_night)) %>% 
-#   dplyr::group_by(grts_cell_id, location_name) %>% 
-#   dplyr::summarise(start_date = min(recording_night), end_date = max(recording_night)) %>% 
-#   mutate(grts_cell_id = as.character(grts_cell_id))  #gets rid  of commas in table output.
-# 
-# survey_dates %>% flextable() %>% 
-#   merge_v(j = ~grts_cell_id) %>% 
-#   set_header_labels(.,
-#                     grts_cell_id = "NABat Cell",
-#                     location_name = "Location Name",
-#                     start_date = "Survey Start Date",
-#                     end_date = "Survey End Date") %>% 
-#   theme_box() %>% 
-#   flextable::align(., align = "center", part = "all") %>% 
-#   set_table_properties(., layout = "autofit")
-```
-
-```{r}
-# notes for helping Christen 
-
 survey_dates <- all_dat %>% 
   dplyr::group_by(grts_cell_id, location_name, year) %>% 
   dplyr::summarise(start_date = min(recording_night), end_date = max(recording_night)) %>% 
@@ -477,13 +376,7 @@ for (i in seq(1, nrow(sonograms))){
 
 To learn more about the North American Bat Monitoring Program visit [nabatmonitoring.org](https://www.nabatmonitoring.org/).
 
-To learn more about the PacWest Bat Hub visit [pacwestbats.org](https://www.pacwestbats.org/).
-
 To learn more about bats and to support their conservation visit [batcon.org](https://www.batcon.org/).
-
-<p align="center">
-<img width="400" src="../images/pacwest_logo.png">
-</p>
 
 <p align="center">
 <img width="400" src="../images/BCI_logo.png">

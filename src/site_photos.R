@@ -43,7 +43,7 @@ get_site_photos = function(username, password, project_id, survey_id, survey_eve
       }
   }', project_id, survey_id, s3_id)
   
-  # token = get_nabat_gql_token(username, password)
+  token = get_nabat_gql_token(username, password)
   token = get_refresh_token(token)
   tkn_hdr = get_token_headers(token, branch, url, aws_gql, aws_alb, docker)
   headers = tkn_hdr$headers
