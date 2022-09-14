@@ -1,4 +1,4 @@
-get_site_photos = function(project_id, survey_id, survey_event_id,
+get_site_photos = function(username, password, project_id, survey_id, survey_event_id,
     branch = 'prod',
     url = NULL,
     aws_gql = NULL,
