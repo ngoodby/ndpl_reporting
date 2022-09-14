@@ -1,4 +1,4 @@
-species_scientific,spp_abbrev,common_name,species_code,species_url,species_full_name,characterisitic_frequency_range,species_couplet_category,species_frequency_category,,species_code_6
+species_scientific,spp_abbrev,common_name,species_code,species_url,species_full_name,freq_range,species_couplet_category,species_freq_category,general_category,species_code_6
 Eptesicus fuscus,EPFUS,Big Brown Bat,EPFU,https://www.batcon.org/bat/eptesicus-fuscus,Big Brown Bat (Eptesicus fuscus),24-34,,Q25k,LoF,EPTFUS
 Myotis yumanensis,MYYUM,Yuma Myotis,MYYU,https://www.batcon.org/bat/myotis-yumanensis,Yuma Myotis (Myotis yumanensis),47-51,MYCAMYYU,Q50k,HiF,MYOYUM
 Eumops perotis,EUPER,Western Mastiff Bat,EUPE,https://www.batcon.org/bat/eumops-perotis,Western Mastiff Bat (Eumops perotis),16-Jul,EUMAEUPE,"Q10k, Q15k",LoF,EUMPER

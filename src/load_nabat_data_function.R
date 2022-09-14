@@ -1,4 +1,4 @@
-load_nabat_data <- function(username, password, project_id, report_grts){
+load_nabat_data <- function(username, password, project_id, report_grts, report_locations){
   #' @title Load NABat Data
   #'
   #' @description Load and clean data
@@ -24,9 +24,9 @@ load_nabat_data <- function(username, password, project_id, report_grts){
       sa_survey_df <- bind_rows(sa_survey_df, sa_survey_df_add)
     }
   }
-  sa_survey_df = sa_survey_df %>% dplyr::filter(grts_cell_id %in% report_grts)
-  # sa_proj_dates = unique(sa_survey_df$year)
-  # this_year = sa_proj_dates[1]
+  if (report_grts[1] != ""){
+    sa_survey_df = sa_survey_df %>% dplyr::filter(grts_cell_id %in% report_grts)
+  }
   token = get_refresh_token(token)
   sa_bulk_df = get_sa_bulk_wavs(token,
                                 sa_survey_df,
@@ -39,14 +39,13 @@ load_nabat_data <- function(username, password, project_id, report_grts){
   all_dat <- left_join(all_dat, sa_survey_df, keep=F) %>% 
     mutate(year = lubridate::year(recording_night))
   if (report_locations[1] != ""){
-    all_dat <- all_dat %>% mutate(year = lubridate::year(recording_night)) %>% 
+    all_dat <- all_dat %>% 
       dplyr::filter(location_name %in% report_locations)
   }
-  #these two lines to compensate for year not loading on import from NABat API. Can remove if that ever gets resolved. 
   sa_proj_dates = unique(all_dat$year)
   this_year = max(sa_proj_dates)
   dat_count <- all_dat %>% 
-    dplyr::filter(!species_code %in% exclude) %>%
+    dplyr::filter(!species_code %in% exclude) %>% #filtering on dat_count instead of all_dat allows for a count of calls later on and preserves couplets
     dplyr::filter(nchar(species_code) == 4) %>% 
     dplyr::filter(!is.na(manual_id)) %>%
     separate_rows(species_code) %>% 
@@ -56,8 +55,8 @@ load_nabat_data <- function(username, password, project_id, report_grts){
     replace(is.na(.), 0) %>%
     pivot_longer(., cols = 4:length(.)) %>% 
     dplyr::mutate(pres_abs = case_when(
-      value == 0 ~ "",
-      value > 0 ~ "X")) %>%
+      value == 0 ~ FALSE,
+      value > 0 ~ TRUE)) %>%
     dplyr::rename(species = name) %>%
     dplyr::select(-value)
   return(list(all_dat, dat_count, sa_survey_df))

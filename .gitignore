@@ -11,3 +11,5 @@ site_photos
 site_photos/
 *.xlsx
 .RHistory
+*.png
+.icloud
