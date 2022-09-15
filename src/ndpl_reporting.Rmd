@@ -75,12 +75,12 @@ forest_id <- params$forest_id
 ```
 
 ```{r NABat API, results = 'hide'}
-username = 'ngoodby@batcon.org'
-password = '3%0T47ICp%cU'
+username = 'clong@batcon.org'
+password = 'Myotisciliolabrum@9721'
 report_grts = c(106,2858)
 project_id = 353
 report_locations = ""
-forest_id <- "Bridger-TetonNF"
+forest_id <- "CentralCal"
 
 source(here::here("src", "load_nabat_data_function.R"))
 data <- load_nabat_data(username, password, project_id, report_grts, report_locations)
@@ -125,11 +125,13 @@ The resulting recording files were sent to Bat Conservation International (BCI) 
 
 We attempted to confirm the identification of a maximum of three files per species, per night, per site by visually inspecting the species ID proposed by Sonobat 4.4. Up to 10 files per species-site-night were reviewed in an attempt to confirm the species ID of 3 files. Review options included:
 
-1. Confirming species as assigned by the program; 
+1. Confirming species as assigned by the programs; 
 
-2. Assigning the file to a species couplet, or frequency category based on the frequency and call shape (Table 1); or 
+2. Assigning the file to a species couplet, or frequency category based on the frequency and call shape (Table 1); 
 
-3. Assigning the files as noise, i.e., not a recording of bat echolocation calls. We reviewed files in order of confidence in identification as expressed by the program. 
+3. Assigning the file to a species other than what was assigned by the programs; or 
+
+4. Assigning the files as noise, i.e., not a recording of bat echolocation calls. We reviewed files in order of confidence in identification as expressed by the program. 
 
 A confirmed identification of a species in 1 or more files on a given night at a given site resulted in a designation of species presence for that site-night. Identification of up to three files added an additional measure of confidence to species presence designations. When we could not assign any files recorded on a site-night to species, that species was considered “not detected.”
 
@@ -250,7 +252,7 @@ In `r this_year`, we confirmed the presence of `r total_species` bat species (Fi
 
 The 2021 metadata is presented in Appendix 2.
 
-![Species that may occur in jurisdiction of the `r partner` and the specific and general categories in which they are included. ](`r table_path`)
+![Species that may occur in surveyed area of the `r partner` and the specific and general categories in which they are included. ](`r table_path`)
 
 ## Call files confirmed in `r this_year`
 
@@ -268,15 +270,22 @@ species_table_this_year <- filtered_all_dat %>%
   arrange(., species_code) %>% 
   pivot_wider(names_from = species_code, 
               values_from = num_confirmed_files,
-              values_fill = 0) %>% 
-  arrange(., grts_cell_id, location_name, recording_night)
+              values_fill = ) %>% 
+  arrange(., grts_cell_id, location_name, recording_night) %>% 
+  mutate(grts_cell_id = as.character(grts_cell_id)) %>% 
+  rename("GRTS Cell" = grts_cell_id, "Location Name"=location_name, "Monitoring Night"=recording_night)
 
+
+     
 species_table_this_year %>%
   flextable(col_keys = names(.)) %>% 
-  merge_v(., j=c("location_name", "grts_cell_id")) %>% 
+  merge_v(., j=c("Location Name", "GRTS Cell")) %>% 
   theme_box() %>%
+  bg(, bg = "light blue", part = "header") %>% 
   flextable::align(., align = "center", part = "all") %>%
-  set_table_properties(., width = 1, layout = "autofit")
+  bold(, j = 1, bold = TRUE, part = "header") %>% 
+  set_table_properties(., width = 1, layout = "autofit") %>% 
+set_caption(paste("Number of files confirmed for each species and species group detected per site and night at stationary sites in ", this_year))
 ```
 
 ***
@@ -306,9 +315,11 @@ species_count %>%
   add_header_row(values = as.list(table_names[,2])) %>%
   merge_h(part = "header") %>%
   theme_box() %>%
+ bg(, bg = "light blue", part = "header") %>% 
+  bold(, bold = TRUE, part = "body") %>% 
   flextable::align(., align = "center", part = "all") %>%
   set_table_properties(., width = 1, layout = "autofit") %>%
-  set_caption("This table shows which years each bat species was detected at each location.")
+  set_caption("Presence (X) or not detected (blank cell) of bat species (listed in table 1) recorded at stationary sites every year.")
 ```
 
 ***
@@ -316,6 +327,23 @@ species_count %>%
 # __Metadata__
 
 ```{r}
+metadata <- all_dat %>% 
+  dplyr::group_by(grts_cell_id, location_name, latitude, longitude) %>% 
+  dplyr::summarise(meta = n())
+  arrange(.,grts_cell_id, location_name, latitude, longitude) %>% 
+    mutate(grts_cell_id = as.character(grts_cell_id)) %>%
+    
+metadata %>% flextable() %>% 
+  merge_v(j = "grts_cell_id") %>% 
+  set_header_labels(.,
+                    grts_cell_id = "NABat Cell",
+                    location_name = "Location Name",
+                    latitude = "Latitude",
+                    longitude = "Longitude") %>% 
+
+  theme_box() %>% 
+  flextable::align(., align = "center", part = "all") %>% 
+  set_table_properties(., layout = "autofit")
 
 ```
 
