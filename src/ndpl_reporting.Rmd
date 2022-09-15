@@ -283,7 +283,7 @@ species_table_this_year %>%
   theme_box() %>%
   bg(, bg = "light blue", part = "header") %>% 
   flextable::align(., align = "center", part = "all") %>%
-  bold(, j = 1, bold = TRUE, part = "header") %>% 
+  bold(, j = 1, bold = TRUE) %>% 
   set_table_properties(., width = 1, layout = "autofit") %>% 
 set_caption(paste("Number of files confirmed for each species and species group detected per site and night at stationary sites in ", this_year))
 ```
@@ -328,20 +328,25 @@ species_count %>%
 
 ```{r}
 metadata <- all_dat %>% 
-  dplyr::group_by(grts_cell_id, location_name, latitude, longitude) %>% 
-  dplyr::summarise(meta = n())
-  arrange(.,grts_cell_id, location_name, latitude, longitude) %>% 
-    mutate(grts_cell_id = as.character(grts_cell_id)) %>%
+  dplyr::filter(year == this_year) %>% 
+  dplyr::group_by(grts_cell_id, location_name, detector_type_id, detector_serial_number, microphone_type_id) %>% 
+ dplyr::summarise(Latitude = mean(latitude), Longitude = mean(longitude)) %>% 
+ mutate(grts_cell_id = as.character(grts_cell_id))
     
+
 metadata %>% flextable() %>% 
   merge_v(j = "grts_cell_id") %>% 
   set_header_labels(.,
                     grts_cell_id = "NABat Cell",
                     location_name = "Location Name",
-                    latitude = "Latitude",
-                    longitude = "Longitude") %>% 
+                    detector_type_id = "Detector Type",
+                    detector_serial_number = "Detector Serial #",
+                    microphone_type_id = "Microphone Type") %>% 
+                  
 
   theme_box() %>% 
+  bg(, bg = "light grey", part = "header") %>% 
+  bold(, j = 1, bold = TRUE) %>%
   flextable::align(., align = "center", part = "all") %>% 
   set_table_properties(., layout = "autofit")
 
@@ -368,6 +373,7 @@ survey_dates %>% flextable() %>%
                     end_date = "Survey End Date",
                     year = "Year") %>% 
   theme_box() %>% 
+  bg(, bg = "grey", part = "header") %>% 
   flextable::align(., align = "center", part = "all") %>% 
   set_table_properties(., layout = "autofit")
 ```
