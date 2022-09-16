@@ -181,7 +181,7 @@ for (i in seq(1, nrow(photo_queries))){
 
 ```{r}
 # delete site_photos folder from previous reports generated
-unlink(here::here("site_photos"), recursive = T))
+unlink(here::here("site_photos"), recursive = T)
 
 # create folders for each survey site and put the relevant photos into them
 for (i in seq(1, length(pics))){
