@@ -284,9 +284,9 @@ species_table_this_year %>%
   flextable(col_keys = names(.)) %>% 
   merge_v(., j=c("Location Name", "GRTS Cell")) %>% 
   theme_box() %>%
-  bg(, bg = "light blue", part = "header") %>% 
+  bg(., bg = "light blue", part = "header") %>% 
   flextable::align(., align = "center", part = "all") %>%
-  bold(, j = 1, bold = TRUE) %>% 
+  bold(., j = 1, bold = TRUE) %>% 
   set_table_properties(., width = 1, layout = "autofit") %>% 
 set_caption(paste("Number of files confirmed for each species and species group detected per site and night at stationary sites in ", this_year))
 ```
@@ -318,8 +318,8 @@ species_count %>%
   add_header_row(values = as.list(table_names[,2])) %>%
   merge_h(part = "header") %>%
   theme_box() %>%
- bg(, bg = "light blue", part = "header") %>% 
-  bold(, bold = TRUE, part = "body") %>% 
+ bg(., bg = "light blue", part = "header") %>% 
+  bold(., bold = TRUE, part = "body") %>% 
   flextable::align(., align = "center", part = "all") %>%
   set_table_properties(., width = 1, layout = "autofit") %>%
   set_caption("Presence (X) or not detected (blank cell) of bat species (listed in table 1) recorded at stationary sites every year.")
@@ -332,7 +332,7 @@ species_count %>%
 ```{r}
 metadata <- all_dat %>% 
   dplyr::filter(year == this_year) %>% 
-  dplyr::group_by(grts_cell_id, location_name, detector_type_id, detector_serial_number, microphone_type_id) %>% 
+  dplyr::group_by(grts_cell_id, location_name, detector_model, detector_serial_number, mic_type) %>% 
  dplyr::summarise(Latitude = mean(latitude), Longitude = mean(longitude)) %>% 
  mutate(grts_cell_id = as.character(grts_cell_id))
     
@@ -342,14 +342,14 @@ metadata %>% flextable() %>%
   set_header_labels(.,
                     grts_cell_id = "NABat Cell",
                     location_name = "Location Name",
-                    detector_type_id = "Detector Type",
+                    detector_model = "Detector Type",
                     detector_serial_number = "Detector Serial #",
-                    microphone_type_id = "Microphone Type") %>% 
+                    mic_type = "Microphone Type") %>% 
                   
 
   theme_box() %>% 
-  bg(, bg = "light grey", part = "header") %>% 
-  bold(, j = 1, bold = TRUE) %>%
+  bg(., bg = "light grey", part = "header") %>% 
+  bold(., j = 1, bold = TRUE) %>%
   flextable::align(., align = "center", part = "all") %>% 
   set_table_properties(., layout = "autofit")
 
