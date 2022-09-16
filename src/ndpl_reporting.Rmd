@@ -122,9 +122,9 @@ subtracted_species <- lookup_t %>% filter(ForestID==forest_id) %>% pull(Kal_subt
   left_join(., species_reference_table, by=c("value" = "species_code_6")) %>% pull(common_name)
 ```
 
-In `r this_year`, the `r partner` implemented acoustic bat monitoring protocols described in _A Plan for the North American Bat Monitoring Program (NABat)_. Stationary detectors were deployed within GRTS Cells `r report_grts` for four consecutive nights each. The results of the stationary detectors are presented here. was used to record full-spectrum echolocation files. Figure \ref{fig:map} shows the location of each detector within the cell, and Figure 2 shows the habitat at each site.
+In `r this_year`, the `r partner` implemented acoustic bat monitoring protocols described in _A Plan for the North American Bat Monitoring Program (NABat)_. Stationary detectors were deployed within GRTS Cells `r cat(report_grts, sep=", ")` for four consecutive nights each. The results of the stationary detectors are presented here. was used to record full-spectrum echolocation files. Figure \ref{fig:map} shows the location of each detector within the cell, and Figure 2 shows the habitat at each site.
 
-The resulting recording files were sent to Bat Conservation International (BCI) for identification of species presence. Data was checked, renamed, and attributed using a custom R and Python code developed by Conservation Metrics Inc (CMI) and the United States Geological Survey (USGS). Files were then scrubbed of noise using Sonobat Data Wizard 4.4. Sonobatch was used in Sonobat 4.4 set to the `r classifier` to determine call parameters and the suggested species identification. Files were then run through Kaleidoscope Pro 5.3.9, set to the `r kpro_region` region, to provide additional automated identification used in manual vetting. Based on species range maps from Bat Conservation International (https://www.batcon.org/about-bats/bat-profiles) and BatAMP (https://visualize.batamp.databasin.org/presence), `r added_species` `r subtracted_species`. Sonobat 4.4 was then used to manually identify files.
+The resulting recording files were sent to Bat Conservation International (BCI) for identification of species presence. Data was checked, renamed, and attributed using a custom R and Python code developed by Conservation Metrics Inc (CMI) and the United States Geological Survey (USGS). Files were then scrubbed of noise using Sonobat Data Wizard 4.4. Sonobatch was used in Sonobat 4.4 set to the `r classifier` to determine call parameters and the suggested species identification. Files were then run through Kaleidoscope Pro 5.3.9, set to the `r kpro_region` region, to provide additional automated identification used in manual vetting. Based on species range maps from Bat Conservation International (https://www.batcon.org/about-bats/bat-profiles) and BatAMP (https://visualize.batamp.databasin.org/presence), `r cat(added_species, sep = ", ")` `cat(r subtracted_species, sep=", ")`. Sonobat 4.4 was then used to manually identify files.
 
 We attempted to confirm the identification of a maximum of three files per species, per night, per site by visually inspecting the species ID proposed by Sonobat 4.4. Up to 10 files per species-site-night were reviewed in an attempt to confirm the species ID of 3 files. Review options included:
 
@@ -310,6 +310,7 @@ species_count <- dat_count %>%
   rename("Species"=species)
 
 table_names <- names(species_count) %>% str_split(pattern = "_", simplify=T)
+table_names[1,2] <- "Species"
 
 species_count %>%
   flextable(col_keys = names(.)) %>%
@@ -317,8 +318,10 @@ species_count %>%
   add_header_row(values = as.list(table_names[,1])) %>%
   add_header_row(values = as.list(table_names[,2])) %>%
   merge_h(part = "header") %>%
+  merge_v(part = "header") %>% 
   theme_box() %>%
- bg(., bg = "light blue", part = "header") %>% 
+  bg(., bg = "light gray", part = "header", i=1, j=c(2:length(table_names[,1]))) %>% 
+  bg(., bg = "light blue", part = "header", i=2) %>% 
   bold(., bold = TRUE, part = "body") %>% 
   flextable::align(., align = "center", part = "all") %>%
   set_table_properties(., width = 1, layout = "autofit") %>%
@@ -376,7 +379,7 @@ survey_dates %>% flextable() %>%
                     end_date = "Survey End Date",
                     year = "Year") %>% 
   theme_box() %>% 
-  bg(, bg = "grey", part = "header") %>% 
+  bg(., bg = "grey", part = "header") %>% 
   flextable::align(., align = "center", part = "all") %>% 
   set_table_properties(., layout = "autofit")
 ```
