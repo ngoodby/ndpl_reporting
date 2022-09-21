@@ -65,14 +65,14 @@ knitr::opts_chunk$set(echo = FALSE,
 ```
 
 ```{r parameters}
-report_grts <- params$grts %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both")) %>% as.numeric()
-report_locations <- params$locations %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both"))
-username = params$username
-password = params$password
-project_id = params$project %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both")) %>% as.numeric()
-partner = params$agency
-table_path = params$table_path
-forest_id <- params$forest_id
+# report_grts <- params$grts %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both")) %>% as.numeric()
+# report_locations <- params$locations %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both"))
+# username = params$username
+# password = params$password
+# project_id = params$project %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both")) %>% as.numeric()
+# partner = params$agency
+# table_path = params$table_path
+# forest_id <- params$forest_id
 ```
 
 ```{r NABat API, results = 'hide'}
@@ -82,6 +82,8 @@ report_grts = c(106,2858)
 project_id = 353
 report_locations = ""
 forest_id <- "CentralCal"
+partner <- "USFS"
+table_path <- "/Users/ngoodby/Desktop/Screen Shot 2022-09-14 at 9.25.03 AM.png"
 
 source(here::here("src", "load_nabat_data_function.R"))
 data <- load_nabat_data(username, password, project_id, report_grts, report_locations)
@@ -124,7 +126,7 @@ subtracted_species <- lookup_t %>% filter(ForestID==forest_id) %>% pull(Kal_subt
 
 In `r this_year`, the `r partner` implemented acoustic bat monitoring protocols described in _A Plan for the North American Bat Monitoring Program (NABat)_. Stationary detectors were deployed within GRTS Cells `r cat(report_grts, sep=", ")` for four consecutive nights each. The results of the stationary detectors are presented here. was used to record full-spectrum echolocation files. Figure \ref{fig:map} shows the location of each detector within the cell, and Figure 2 shows the habitat at each site.
 
-The resulting recording files were sent to Bat Conservation International (BCI) for identification of species presence. Data was checked, renamed, and attributed using a custom R and Python code developed by Conservation Metrics Inc (CMI) and the United States Geological Survey (USGS). Files were then scrubbed of noise using Sonobat Data Wizard 4.4. Sonobatch was used in Sonobat 4.4 set to the `r classifier` to determine call parameters and the suggested species identification. Files were then run through Kaleidoscope Pro 5.3.9, set to the `r kpro_region` region, to provide additional automated identification used in manual vetting. Based on species range maps from Bat Conservation International (https://www.batcon.org/about-bats/bat-profiles) and BatAMP (https://visualize.batamp.databasin.org/presence), `r cat(added_species, sep = ", ")` `cat(r subtracted_species, sep=", ")`. Sonobat 4.4 was then used to manually identify files.
+The resulting recording files were sent to Bat Conservation International (BCI) for identification of species presence. Data was checked, renamed, and attributed using a custom R and Python code developed by Conservation Metrics Inc (CMI) and the United States Geological Survey (USGS). Files were then scrubbed of noise using Sonobat Data Wizard 4.4. Sonobatch was used in Sonobat 4.4 set to the `r classifier` to determine call parameters and the suggested species identification. Files were then run through Kaleidoscope Pro 5.3.9, set to the `r kpro_region` region, to provide additional automated identification used in manual vetting. Based on species range maps from Bat Conservation International (https://www.batcon.org/about-bats/bat-profiles) and BatAMP (https://visualize.batamp.databasin.org/presence), `r cat(added_species, sep = ", ")` `r cat(subtracted_species, sep=", ")`. Sonobat 4.4 was then used to manually identify files.
 
 We attempted to confirm the identification of a maximum of three files per species, per night, per site by visually inspecting the species ID proposed by Sonobat 4.4. Up to 10 files per species-site-night were reviewed in an attempt to confirm the species ID of 3 files. Review options included:
 
@@ -277,8 +279,6 @@ species_table_this_year <- filtered_all_dat %>%
   arrange(., grts_cell_id, location_name, recording_night) %>% 
   mutate(grts_cell_id = as.character(grts_cell_id)) %>% 
   rename("GRTS Cell" = grts_cell_id, "Location Name"=location_name, "Monitoring Night"=recording_night)
-
-
      
 species_table_this_year %>%
   flextable(col_keys = names(.)) %>% 
@@ -343,7 +343,7 @@ metadata <- all_dat %>%
 metadata %>% flextable() %>% 
   merge_v(j = "grts_cell_id") %>% 
   set_header_labels(.,
-                    grts_cell_id = "NABat Cell",
+                    grts_cell_id = "GRTS Cell",
                     location_name = "Location Name",
                     detector_model = "Detector Type",
                     detector_serial_number = "Detector Serial #",
@@ -373,7 +373,7 @@ survey_dates <- all_dat %>%
 survey_dates %>% flextable() %>% 
   merge_v(j = c("grts_cell_id", "location_name")) %>% 
   set_header_labels(.,
-                    grts_cell_id = "NABat Cell",
+                    grts_cell_id = "GRTS Cell",
                     location_name = "Location Name",
                     start_date = "Survey Start Date",
                     end_date = "Survey End Date",
