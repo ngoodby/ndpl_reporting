@@ -139,7 +139,7 @@ subtracted_species <- lookup_t %>% filter(data_id==forest_id) %>% pull(Kal_subtr
 ```
 
 
-In `r this_year`, the `r partner` implemented acoustic bat monitoring protocols described in _A Plan for the North American Bat Monitoring Program (NABat)_. Stationary detectors were deployed within `r length(report_grts)` GRTS cell(s) for four consecutive nights each. The results of the stationary detectors are presented here. Full spectrum echolocation files were recorded using the detectors in Table \@ref(tab:Meta). Figure \@ref(fig:Map) shows the location of each detector within the cell, and Section (Section \@ref(site-photos)) shows the habitat at each site.
+In `r this_year`, the `r partner` implemented acoustic bat monitoring protocols described in _A Plan for the North American Bat Monitoring Program (NABat)_. Stationary detectors were deployed within `r length(report_grts)` GRTS cell(s) for four consecutive nights each. The results of the stationary detectors are presented here. Full spectrum echolocation files were recorded using the detectors in Table \@ref(tab:meta). Figure \@ref(fig:Map) shows the location of each detector within the cell, and Section (Section \@ref(site-photos)) shows the habitat at each site.
 
 The resulting recording files were sent to Bat Conservation International (BCI) for identification of species presence. Data was checked, renamed, and attributed using a custom R and Python code developed by Conservation Metrics Inc (CMI) and the United States Geological Survey (USGS). Files were then scrubbed of noise using Sonobat Data Wizard 4.4. Sonobatch was used in Sonobat 4.4 set to the `r classifier` to determine call parameters and the suggested species identification. Files were then run through Kaleidoscope Pro 5.3.9, set to the `r kpro_region` region, to provide additional automated identification used in manual vetting. 
 
@@ -295,15 +295,40 @@ for (i in seq(1, length(grts_long_photo_paths))){
 
 ```{r}
 total_species <- dat_count %>% dplyr::filter(year == this_year, pres_abs == TRUE) %>% group_by(year) %>% summarise(n = n_distinct(species)) %>% dplyr::pull(n)
+
+all_total_species <- dat_count  %>% 
+dplyr::filter(pres_abs == TRUE) %>% 
+   group_by(pres_abs) %>% summarise(n = n_distinct(species)) %>% 
+ dplyr::pull(n)
+
+
+
+all_total_species_106<- dat_count %>% dplyr::filter(pres_abs == TRUE, grts_cell_id == 106) %>% group_by(grts_cell_id) %>% summarise(n = n_distinct(species)) %>% dplyr::pull(n)
+
+all_total_species_12858<- dat_count %>% dplyr::filter(pres_abs == TRUE, grts_cell_id == 2858) %>% group_by(grts_cell_id) %>% summarise(n = n_distinct(species)) %>% dplyr::pull(n)
+
+species_2020 <- dat_count %>% dplyr::filter(pres_abs == TRUE, year == 2020) %>% group_by(year) %>% summarise(n = n_distinct(species)) %>% dplyr::pull(n)
+
+species_2021 <- dat_count %>% dplyr::filter(pres_abs == TRUE, year == 2021) %>% group_by(year) %>% summarise(n = n_distinct(species)) %>% dplyr::pull(n)
+
+species_per_106 <- dat_count %>%
+  dplyr::filter(year == this_year, pres_abs == TRUE, grts_cell_id == 106) %>% 
+  group_by(grts_cell_id) %>% 
+  summarise(n = n_distinct(species)) %>% dplyr::pull(n)
+
+species_per_2858 <- dat_count %>%
+  dplyr::filter(year == this_year, pres_abs == TRUE, grts_cell_id == 2858) %>% 
+  group_by(grts_cell_id) %>% 
+  summarise(n = n_distinct(species)) %>% dplyr::pull(n)
+
 ```
 
-In `r this_year`, we confirmed the presence of `r total_species` bat species (see Table \@ref(tab:speciesthisyear)).
+In `r this_year`, we confirmed the presence of `r total_species` bat species (see Table \@ref(tab:speciesthisyear)): `r species_per_106` in GRTS cell 106 and `r species_per_2858` in GRTS cell 2858.
+
+Over all years of monitoring, we confirmed `r all_total_species` bat species (see Table \@ref(tab:speciesallyears)):`r species_2020` in 2020 and `r species_2021` in GRTS cell 2021.
 
 
-
-
-
-## Call files confirmed in `r this_year`
+## Bat species confirmed in `r this_year`
 
 ```{r speciesthisyear}
 exclude <- c("NOISE", NA)
@@ -400,7 +425,8 @@ metadata %>% flextable() %>%
   bg(., bg = "light grey", part = "header") %>% 
   bold(., j = 1, bold = TRUE) %>%
   flextable::align(., align = "center", part = "all") %>% 
-  set_table_properties(., layout = "autofit")
+  set_table_properties(., layout = "autofit") %>% 
+  set_caption(paste("Metadata for the GRTS cells surveyed in", this_year))
 
 ```
 
@@ -427,7 +453,8 @@ survey_dates %>% flextable() %>%
   theme_box() %>% 
   bg(., bg = "grey", part = "header") %>% 
   flextable::align(., align = "center", part = "all") %>% 
-  set_table_properties(., layout = "autofit")
+  set_table_properties(., layout = "autofit") %>% 
+  set_caption("Survey dates for all years of monitoring")
 ```
 
 ***
