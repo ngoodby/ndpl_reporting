@@ -64,6 +64,18 @@ knitr::opts_chunk$set(echo = FALSE,
   library(readxl)
 ```
 
+```{r Inputs}
+username = 'ngoodby@batcon.org'
+password = '3%0T47ICp%cU'
+report_grts = c(106,2858)
+project_id = 353
+report_locations = ""
+forest_id <- "CentralCal"
+partner <- "USFS"
+table_path <- "/Users/ngoodby/Desktop/Screen Shot 2022-09-14 at 9.25.03 AM.png"
+```
+
+
 ```{r parameters}
 # report_grts <- params$grts %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both")) %>% as.numeric()
 # report_locations <- params$locations %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both"))
@@ -76,15 +88,6 @@ knitr::opts_chunk$set(echo = FALSE,
 ```
 
 ```{r NABat API, results = 'hide'}
-username = 'clong@batcon.org'
-password = 'Myotisciliolabrum@9721'
-report_grts = c(106,2858)
-project_id = 353
-report_locations = ""
-forest_id <- "CentralCal"
-partner <- "USFS"
-table_path <- "/Users/ngoodby/Desktop/Screen Shot 2022-09-14 at 9.25.03 AM.png"
-
 source(here::here("src", "load_nabat_data_function.R"))
 data <- load_nabat_data(username, password, project_id, report_grts, report_locations)
 all_dat <- data[[1]]
@@ -124,7 +127,7 @@ subtracted_species <- lookup_t %>% filter(ForestID==forest_id) %>% pull(Kal_subt
   left_join(., species_reference_table, by=c("value" = "species_code_6")) %>% pull(common_name)
 ```
 
-In `r this_year`, the `r partner` implemented acoustic bat monitoring protocols described in _A Plan for the North American Bat Monitoring Program (NABat)_. Stationary detectors were deployed within GRTS Cells `r cat(report_grts, sep=", ")` for four consecutive nights each. The results of the stationary detectors are presented here. was used to record full-spectrum echolocation files. Figure \ref{fig:map} shows the location of each detector within the cell, and Figure 2 shows the habitat at each site.
+In `r this_year`, the `r partner` implemented acoustic bat monitoring protocols described in _A Plan for the North American Bat Monitoring Program (NABat)_. Stationary detectors were deployed within GRTS Cells `r cat(report_grts, sep=", ")` for four consecutive nights each. The results of the stationary detectors are presented here. Full spectrum echolocation files were recorded using the detectors in Table XX. Figure \ref{fig:=Map} shows the location of each detector within the cell, and Figure 2 shows the habitat at each site.
 
 The resulting recording files were sent to Bat Conservation International (BCI) for identification of species presence. Data was checked, renamed, and attributed using a custom R and Python code developed by Conservation Metrics Inc (CMI) and the United States Geological Survey (USGS). Files were then scrubbed of noise using Sonobat Data Wizard 4.4. Sonobatch was used in Sonobat 4.4 set to the `r classifier` to determine call parameters and the suggested species identification. Files were then run through Kaleidoscope Pro 5.3.9, set to the `r kpro_region` region, to provide additional automated identification used in manual vetting. Based on species range maps from Bat Conservation International (https://www.batcon.org/about-bats/bat-profiles) and BatAMP (https://visualize.batamp.databasin.org/presence), `r cat(added_species, sep = ", ")` `r cat(subtracted_species, sep=", ")`. Sonobat 4.4 was then used to manually identify files.
 
@@ -138,7 +141,7 @@ We attempted to confirm the identification of a maximum of three files per speci
 
 4. Assigning the files as noise, i.e., not a recording of bat echolocation calls. We reviewed files in order of confidence in identification as expressed by the program. 
 
-A confirmed identification of a species in 1 or more files on a given night at a given site resulted in a designation of species presence for that site-night. Identification of up to three files added an additional measure of confidence to species presence designations. When we could not assign any files recorded on a site-night to species, that species was considered “not detected.”
+A confirmed identification of a species in one or more files on a given night at a given site resulted in a designation of species presence for that site-night. Identification of up to three files added an additional measure of confidence to species presence designations. When we could not assign any files recorded on a site-night to species, that species was considered “not detected.”
 
 ***
 
