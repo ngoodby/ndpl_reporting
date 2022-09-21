@@ -368,6 +368,8 @@ species_count %>%
 
 # __Metadata__
 
+## __Equipment__
+
 ```{r}
 metadata <- all_dat %>% 
   dplyr::filter(year == this_year) %>% 
@@ -396,7 +398,7 @@ metadata %>% flextable() %>%
 
 ***
 
-# __Survey Dates__
+## __Survey Dates__
 
 ```{r}
 survey_dates <- all_dat %>% 
@@ -425,7 +427,7 @@ survey_dates %>% flextable() %>%
 # __Example Sonograms__
 
 ```{r}
-species_ref_list <- unique(species_reference_table$species_code)
+species_ref_list <- list.files(here::here("sonograms"), full.names = F) %>% str_split(pattern = "_", simplify=T) %>% .[,1]
 sonograms <- dat_count %>% 
   dplyr::filter(pres_abs == TRUE) %>%
   dplyr::group_by(species, species_scientific) %>% 
@@ -452,6 +454,6 @@ for (i in seq(1, nrow(sonograms))){
 
 To learn more about the North American Bat Monitoring Program visit [nabatmonitoring.org](https://www.nabatmonitoring.org/).
 
-To learn more about bats and to support their conservation visit [batcon.org](https://www.batcon.org/).
-\n
-![](../images/NABat_logo.png){height="100"}
+To learn more about bats and to support their conservation visit [batcon.org](https://www.batcon.org/).\n
+
+![](../images/NABat_logo.png){height="200"}
