@@ -18,8 +18,6 @@ params:
   table_path: NA
 ---
 
-<img width="100" src="../images/images/NABat_logo.png">
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE,
                       warning = FALSE,
@@ -65,6 +63,7 @@ knitr::opts_chunk$set(echo = FALSE,
 ```
 
 ```{r Inputs}
+
 username = 'clong@batcon.org'
 password = 'Myotisciliolabrum@9721'
 report_grts = c(106,2858)
@@ -73,10 +72,22 @@ report_locations = ""
 forest_id <- "CentralCal"
 partner <- "USFS"
 table_path <- "../species tables/California.png"
+
+
 ```
 
+![](../images/BCI_logo.png){height=100} 
 
-```{r parameters}
+```{r results='asis'}
+# partner name needs to match file name of the logo
+logos <- list.files(here::here("logos"), full.names = F)
+if (paste0(partner, ".png") %in% logos){
+  cat(sprintf('![](../logos/%s)', paste0(partner, ".png")))
+  cat("{height=100}")
+}
+```
+
+```{r shiny parameters}
 # report_grts <- params$grts %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both")) %>% as.numeric()
 # report_locations <- params$locations %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both"))
 # username = params$username
@@ -116,20 +127,45 @@ current_year <- as.character(this_year)
 # __Methods__
 
 ```{r}
-lookup_t <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/1UggTTGxYYmVM2FVpjHqn-q0AZLb-oqGKlJytg7r5JXg/edit?usp=sharing')
-classifier <- lookup_t %>% filter(ForestID==forest_id) %>% pull(Species_List)
-kpro_region <- lookup_t %>% filter(ForestID==forest_id) %>% pull(Kal_Classifier)
-added_species <- lookup_t %>% filter(ForestID==forest_id) %>% pull(Kal_addspp) %>% 
+lookup_t <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/1UggTTGxYYmVM2FVpjHqn-q0AZLb-oqGKlJytg7r5JXg/edit?usp=sharing', sheet = "2022")
+classifier <- lookup_t %>% filter(data_id==forest_id) %>% pull(Species_List)
+kpro_region <- lookup_t %>% filter(data_id==forest_id) %>% pull(Kal_Classifier)
+added_species <- lookup_t %>% filter(data_id==forest_id) %>% pull(Kal_addspp) %>% 
   as_tibble() %>% separate_rows(.,1,sep = ",") %>% mutate("value" = str_trim(.$value)) %>% 
   left_join(., species_reference_table, by=c("value" = "species_code_6")) %>% pull(common_name)
-subtracted_species <- lookup_t %>% filter(ForestID==forest_id) %>% pull(Kal_subtrspp) %>% 
+subtracted_species <- lookup_t %>% filter(data_id==forest_id) %>% pull(Kal_subtrspp) %>% 
   as_tibble() %>% separate_rows(.,1,sep = ",") %>% mutate("value" = str_trim(.$value)) %>% 
   left_join(., species_reference_table, by=c("value" = "species_code_6")) %>% pull(common_name)
 ```
 
-In `r this_year`, the `r partner` implemented acoustic bat monitoring protocols described in _A Plan for the North American Bat Monitoring Program (NABat)_. Stationary detectors were deployed within GRTS Cells `r cat(report_grts, sep=", ")` for four consecutive nights each. The results of the stationary detectors are presented here. Full spectrum echolocation files were recorded using the detectors in Table \@ref(tab:Meta). Figure \@ref(fig:Map) shows the location of each detector within the cell, and Section (Section \@ref(site-photos)) shows the habitat at each site.
 
-The resulting recording files were sent to Bat Conservation International (BCI) for identification of species presence. Data was checked, renamed, and attributed using a custom R and Python code developed by Conservation Metrics Inc (CMI) and the United States Geological Survey (USGS). Files were then scrubbed of noise using Sonobat Data Wizard 4.4. Sonobatch was used in Sonobat 4.4 set to the `r classifier` to determine call parameters and the suggested species identification. Files were then run through Kaleidoscope Pro 5.3.9, set to the `r kpro_region` region, to provide additional automated identification used in manual vetting. Based on species range maps from Bat Conservation International (https://www.batcon.org/about-bats/bat-profiles) and BatAMP (https://visualize.batamp.databasin.org/presence), `r cat(added_species, sep = ", ")` `r cat(subtracted_species, sep=", ")`. Sonobat 4.4 was then used to manually identify files.
+In `r this_year`, the `r partner` implemented acoustic bat monitoring protocols described in _A Plan for the North American Bat Monitoring Program (NABat)_. Stationary detectors were deployed within `r length(report_grts)` GRTS cell(s) for four consecutive nights each. The results of the stationary detectors are presented here. Full spectrum echolocation files were recorded using the detectors in Table \@ref(tab:Meta). Figure \@ref(fig:Map) shows the location of each detector within the cell, and Section (Section \@ref(site-photos)) shows the habitat at each site.
+
+The resulting recording files were sent to Bat Conservation International (BCI) for identification of species presence. Data was checked, renamed, and attributed using a custom R and Python code developed by Conservation Metrics Inc (CMI) and the United States Geological Survey (USGS). Files were then scrubbed of noise using Sonobat Data Wizard 4.4. Sonobatch was used in Sonobat 4.4 set to the `r classifier` to determine call parameters and the suggested species identification. Files were then run through Kaleidoscope Pro 5.3.9, set to the `r kpro_region` region, to provide additional automated identification used in manual vetting. 
+
+```{r results = 'asis'}
+if (all(is.na(added_species)) & all(is.na(subtracted_species))){
+  cat("Based on species range maps from [Bat Conservation International](https://www.batcon.org/about-bats/bat-profiles) and [BatAMP](https://visualize.batamp.databasin.org/presence), the Kaleidoscope Pro species list was deemed appropriate and were not altered.")
+  print("\n")
+} else if(!all(is.na(added_species)) & all(is.na(subtracted_species))){
+  cat("Based on species range maps from [Bat Conservation International](https://www.batcon.org/about-bats/bat-profiles) and [BatAMP](https://visualize.batamp.databasin.org/presence), the Kaleidoscope Pro species list was customized to include the following species: \n")
+  cat(added_species, sep = ", ")
+  cat(". \n")
+} else if(all(is.na(added_species)) & all(!is.na(subtracted_species))){
+  cat("Based on species range maps from [Bat Conservation International](https://www.batcon.org/about-bats/bat-profiles) and [BatAMP](https://visualize.batamp.databasin.org/presence), the Kaleidoscope Pro species list was customized to exclude the following species: \n")
+  cat(subtracted_species, sep = ", ")
+  cat(". \n")
+} else{
+  cat("Based on species range maps from [Bat Conservation International](https://www.batcon.org/about-bats/bat-profiles) and [BatAMP](https://visualize.batamp.databasin.org/presence), the Kaleidoscope Pro species list was customized to include the following species:\n")
+  cat(added_species, sep = ", ")
+  cat(". \n\n")
+  cat("The species list was further customized to exclude the following species:\n")
+  cat(subtracted_species, sep = ", ")
+  cat(". \n")
+}
+```
+
+Sonobat 4.4 was then used to manually identify files.
 
 We attempted to confirm the identification of a maximum of three files per species, per night, per site by visually inspecting the species ID proposed by Sonobat 4.4. Up to 10 files per species-site-night were reviewed in an attempt to confirm the species ID of 3 files. Review options included:
 
@@ -403,7 +439,7 @@ sonograms <- dat_count %>%
   dplyr::group_by(species, species_scientific) %>% 
   dplyr::distinct(species, species_scientific) %>% 
   dplyr::summarise(sgram = case_when(
-    species %in% species_ref_list ~ sprintf("![%s](../sonograms/%s_sgram.png)",species_scientific, species),
+    species %in% species_ref_list ~ sprintf("![%s](../sonograms/%s_sgram.png)", species_scientific, species),
     !species %in% species_ref_list ~ "no sonogram available"
   ))
 ```
@@ -426,6 +462,6 @@ To learn more about the North American Bat Monitoring Program visit [nabatmonito
 
 To learn more about bats and to support their conservation visit [batcon.org](https://www.batcon.org/).
 
-<p align="center">
-<img width="400" src="../images/images/BCI_logo.png">
-</p>
+\n
+![](../images/NABat_logo.png){height="100"}
+
