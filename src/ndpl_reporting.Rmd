@@ -2,7 +2,7 @@
 title: "__Bat Acoustic Survey Results__"
 date: "Report produced `r format(Sys.time(), '%d %B, %Y')`"
 output:
-  html_document:
+  bookdown::html_document2:
     toc: yes
     toc_float: yes
     theme: cerulean
@@ -18,7 +18,7 @@ params:
   table_path: NA
 ---
 
-<img width="100" src="../images/NABat_logo.png">
+<img width="100" src="../images/images/NABat_logo.png">
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE,
@@ -65,14 +65,14 @@ knitr::opts_chunk$set(echo = FALSE,
 ```
 
 ```{r Inputs}
-username = 'ngoodby@batcon.org'
-password = '3%0T47ICp%cU'
+username = 'clong@batcon.org'
+password = 'Myotisciliolabrum@9721'
 report_grts = c(106,2858)
 project_id = 353
 report_locations = ""
 forest_id <- "CentralCal"
 partner <- "USFS"
-table_path <- "/Users/ngoodby/Desktop/Screen Shot 2022-09-14 at 9.25.03 AM.png"
+table_path <- "../species tables/California.png"
 ```
 
 
@@ -127,7 +127,7 @@ subtracted_species <- lookup_t %>% filter(ForestID==forest_id) %>% pull(Kal_subt
   left_join(., species_reference_table, by=c("value" = "species_code_6")) %>% pull(common_name)
 ```
 
-In `r this_year`, the `r partner` implemented acoustic bat monitoring protocols described in _A Plan for the North American Bat Monitoring Program (NABat)_. Stationary detectors were deployed within GRTS Cells `r cat(report_grts, sep=", ")` for four consecutive nights each. The results of the stationary detectors are presented here. Full spectrum echolocation files were recorded using the detectors in Table XX. Figure \ref{fig:=Map} shows the location of each detector within the cell, and Figure 2 shows the habitat at each site.
+In `r this_year`, the `r partner` implemented acoustic bat monitoring protocols described in _A Plan for the North American Bat Monitoring Program (NABat)_. Stationary detectors were deployed within GRTS Cells `r cat(report_grts, sep=", ")` for four consecutive nights each. The results of the stationary detectors are presented here. Full spectrum echolocation files were recorded using the detectors in Table\@ref(tab:Meta). Figure\@ref(fig:Map) shows the location of each detector within the cell, and Figure\@ref(fig:Habitat) shows the habitat at each site.
 
 The resulting recording files were sent to Bat Conservation International (BCI) for identification of species presence. Data was checked, renamed, and attributed using a custom R and Python code developed by Conservation Metrics Inc (CMI) and the United States Geological Survey (USGS). Files were then scrubbed of noise using Sonobat Data Wizard 4.4. Sonobatch was used in Sonobat 4.4 set to the `r classifier` to determine call parameters and the suggested species identification. Files were then run through Kaleidoscope Pro 5.3.9, set to the `r kpro_region` region, to provide additional automated identification used in manual vetting. Based on species range maps from Bat Conservation International (https://www.batcon.org/about-bats/bat-profiles) and BatAMP (https://visualize.batamp.databasin.org/presence), `r cat(added_species, sep = ", ")` `r cat(subtracted_species, sep=", ")`. Sonobat 4.4 was then used to manually identify files.
 
@@ -135,13 +135,13 @@ We attempted to confirm the identification of a maximum of three files per speci
 
 1. Confirming species as assigned by the programs; 
 
-2. Assigning the file to a species couplet, or frequency category based on the frequency and call shape (Table 1); 
+2. Assigning the file to a species couplet, or frequency category based on the frequency and call shape; 
 
 3. Assigning the file to a species other than what was assigned by the programs; or 
 
-4. Assigning the files as noise, i.e., not a recording of bat echolocation calls. We reviewed files in order of confidence in identification as expressed by the program. 
+4. Assigning the files as noise, i.e., not a recording of bat echolocation calls. 
 
-A confirmed identification of a species in one or more files on a given night at a given site resulted in a designation of species presence for that site-night. Identification of up to three files added an additional measure of confidence to species presence designations. When we could not assign any files recorded on a site-night to species, that species was considered “not detected.”
+We reviewed files in order of confidence in identification as expressed by the program. A confirmed identification of a species in one or more files on a given night at a given site resulted in a designation of species presence for that site-night. Identification of up to three files added an additional measure of confidence to species presence designations. When we could not assign any files recorded on a site-night to species, that species was considered “not detected.”
 
 ***
 
@@ -169,7 +169,7 @@ map[[1]]
 
 # __Site Photos__
 
-```{r}
+```{r Habitat}
 # load function to pull photos from NABat AWS webserver
 source(here::here("src","site_photos.R"))
 # run function for all survey events and store outputs
@@ -248,6 +248,11 @@ for (i in seq(1, length(grts_long_photo_paths))){
 }
 ```
 
+
+# __Potential Species__
+
+![Species that may occur in surveyed area of the `r partner` and the specific and general categories in which they are included. ](`r table_path`)
+
 ***
 
 # __Results__
@@ -256,15 +261,15 @@ for (i in seq(1, length(grts_long_photo_paths))){
 total_species <- dat_count %>% dplyr::filter(year == this_year, pres_abs == TRUE) %>% group_by(year) %>% summarise(n = n_distinct(species)) %>% dplyr::pull(n)
 ```
 
-In `r this_year`, we confirmed the presence of `r total_species` bat species (Figure \ref{fig:sp_table}).
+In `r this_year`, we confirmed the presence of `r total_species` bat species (see Table \@ref(tab:speciesthisyear)).
 
-The 2021 metadata is presented in Appendix 2.
 
-![Species that may occur in surveyed area of the `r partner` and the specific and general categories in which they are included. ](`r table_path`)
+
+
 
 ## Call files confirmed in `r this_year`
 
-```{r}
+```{r speciesthisyear}
 exclude <- c("NOISE", NA)
 
 filtered_all_dat <- all_dat %>% 
@@ -335,7 +340,7 @@ species_count %>%
 
 # __Metadata__
 
-```{r}
+```{r Meta}
 metadata <- all_dat %>% 
   dplyr::filter(year == this_year) %>% 
   dplyr::group_by(grts_cell_id, location_name, detector_model, detector_serial_number, mic_type) %>% 
@@ -365,7 +370,7 @@ metadata %>% flextable() %>%
 
 # __Survey Dates__
 
-```{r}
+```{r Survey dates}
 survey_dates <- all_dat %>% 
   dplyr::group_by(grts_cell_id, location_name, year) %>% 
   dplyr::summarise(start_date = min(recording_night), end_date = max(recording_night)) %>% 
@@ -422,5 +427,5 @@ To learn more about the North American Bat Monitoring Program visit [nabatmonito
 To learn more about bats and to support their conservation visit [batcon.org](https://www.batcon.org/).
 
 <p align="center">
-<img width="400" src="../images/BCI_logo.png">
+<img width="400" src="../images/images/BCI_logo.png">
 </p>
