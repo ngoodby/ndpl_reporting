@@ -400,7 +400,7 @@ species_count %>%
 ***
 
 # __Metadata__
-
+## GRTS cell Metadata
 
 ```{r meta}
 
@@ -432,7 +432,7 @@ metadata %>% flextable() %>%
 
 ***
 
-## __Survey Dates__
+## Survey Date Metadata
 
 ```{r Surveydates}
 survey_dates <- all_dat %>% 
