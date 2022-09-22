@@ -146,7 +146,7 @@ The resulting recording files were sent to Bat Conservation International (BCI) 
 ```{r results = 'asis'}
 if (all(is.na(added_species)) & all(is.na(subtracted_species))){
   cat("Based on species range maps from [Bat Conservation International](https://www.batcon.org/about-bats/bat-profiles) and [BatAMP](https://visualize.batamp.databasin.org/presence), the Kaleidoscope Pro species list was deemed appropriate and were not altered.")
-  print("\n")
+  cat("\n")
 } else if(!all(is.na(added_species)) & all(is.na(subtracted_species))){
   cat("Based on species range maps from [Bat Conservation International](https://www.batcon.org/about-bats/bat-profiles) and [BatAMP](https://visualize.batamp.databasin.org/presence), the Kaleidoscope Pro species list was customized to include the following species: \n")
   cat(added_species, sep = ", ")
@@ -411,23 +411,24 @@ metadata %>% flextable() %>%
 ```{r Surveydates}
 survey_dates <- all_dat %>% 
   dplyr::group_by(grts_cell_id, location_name, year) %>% 
-  dplyr::summarise(start_date = min(recording_night), end_date = max(recording_night)) %>% 
+  dplyr::summarise(start_date = min(recording_night)) %>% 
+  mutate(start_date = ymd(start_date)) %>%
   arrange(., grts_cell_id, location_name, year) %>% 
-  mutate(grts_cell_id = as.character(grts_cell_id)) %>%    #gets rid  of commas in table output.
-  dplyr::select(-year)
+  mutate(month = lubridate::month(start_date, label=T, abbr=F), day = lubridate::day(start_date)) %>% 
+  unite('start', month:day, remove = T, sep = " ") %>% 
+  # mutate(grts_cell_id = as.character(grts_cell_id)) %>% 
+  pivot_wider(id_cols = c(grts_cell_id, location_name), names_from = year, values_from = start, values_fill = "-")
 
 survey_dates %>% flextable() %>% 
-  merge_v(j = c("grts_cell_id", "location_name")) %>% 
+  merge_v(j = "grts_cell_id") %>% 
   set_header_labels(.,
                     grts_cell_id = "GRTS Cell",
-                    location_name = "Location Name",
-                    start_date = "Survey Start Date",
-                    end_date = "Survey End Date",
-                    year = "Year") %>% 
+                    location_name = "Location Name") %>% 
   theme_box() %>% 
   bg(., bg = "grey", part = "header") %>% 
   flextable::align(., align = "center", part = "all") %>% 
-  set_table_properties(., layout = "autofit")
+  set_table_properties(., layout = "autofit") %>% 
+  set_caption("Surey start dates for each year of acoustic surveys for each detector location.")
 ```
 
 ***
