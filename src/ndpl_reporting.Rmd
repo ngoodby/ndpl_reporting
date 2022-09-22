@@ -428,7 +428,7 @@ survey_dates %>% flextable() %>%
   bg(., bg = "grey", part = "header") %>% 
   flextable::align(., align = "center", part = "all") %>% 
   set_table_properties(., layout = "autofit") %>% 
-  set_caption("Surey start dates for each year of acoustic surveys for each detector location.")
+  set_caption("Surey start dates for each year for each detector location.")
 ```
 
 ***
