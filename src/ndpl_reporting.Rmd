@@ -69,7 +69,7 @@ password = 'Myotisciliolabrum@9721'
 report_grts = c(106,2858)
 project_id = 353
 report_locations = ""
-forest_id <- "CentralCal"
+forest_id <- "CentralCalDFW1"
 partner <- "USFS"
 table_path <- "../species tables/California.png"
 
@@ -331,7 +331,7 @@ Over all years of monitoring, we confirmed `r all_total_species` bat species (se
 ## Bat species confirmed in `r this_year`
 
 ```{r speciesthisyear}
-exclude <- c("NOISE", NA)
+exclude <- c("NOISE", NA, "25k","40k", "HighF", "LABLPAHE", "MYCAMYYU", "LowF", "MYSP")
 
 filtered_all_dat <- all_dat %>% 
   dplyr::filter(year == this_year) %>% 
