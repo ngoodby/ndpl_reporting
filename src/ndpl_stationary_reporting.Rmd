@@ -329,38 +329,37 @@ species_reference_table %>% dplyr::filter(species_code_6 %in% spp_list$name) %>%
 # __Results__
 
 ```{r}
-total_species <- dat_count %>% dplyr::filter(year == this_year, pres_abs == TRUE) %>% group_by(year) %>% summarise(n = n_distinct(species)) %>% dplyr::pull(n)
+total_species_this_year <- dat_count %>% dplyr::filter(year == this_year, pres_abs == TRUE) %>%
+  group_by(year) %>% summarise(n = n_distinct(species)) %>% dplyr::pull(n)
 
-all_total_species <- dat_count  %>% 
-dplyr::filter(pres_abs == TRUE) %>% 
-   group_by(pres_abs) %>% summarise(n = n_distinct(species)) %>% 
- dplyr::pull(n)
+total_species_all_years <- dat_count  %>% 
+  dplyr::filter(pres_abs == TRUE) %>% 
+  group_by(pres_abs) %>% summarise(n = n_distinct(species)) %>% 
+  dplyr::pull(n)
 
+total_species_by_grts_this_year <- dat_count %>% dplyr::filter(year == this_year, pres_abs == TRUE) %>%
+  group_by(grts_cell_id) %>% summarise(n = n_distinct(species))
 
-
-all_total_species_106<- dat_count %>% dplyr::filter(pres_abs == TRUE, grts_cell_id == 106) %>% group_by(grts_cell_id) %>% summarise(n = n_distinct(species)) %>% dplyr::pull(n)
-
-all_total_species_12858<- dat_count %>% dplyr::filter(pres_abs == TRUE, grts_cell_id == 2858) %>% group_by(grts_cell_id) %>% summarise(n = n_distinct(species)) %>% dplyr::pull(n)
-
-species_2020 <- dat_count %>% dplyr::filter(pres_abs == TRUE, year == 2020) %>% group_by(year) %>% summarise(n = n_distinct(species)) %>% dplyr::pull(n)
-
-species_2021 <- dat_count %>% dplyr::filter(pres_abs == TRUE, year == 2021) %>% group_by(year) %>% summarise(n = n_distinct(species)) %>% dplyr::pull(n)
-
-species_per_106 <- dat_count %>%
-  dplyr::filter(year == this_year, pres_abs == TRUE, grts_cell_id == 106) %>% 
-  group_by(grts_cell_id) %>% 
-  summarise(n = n_distinct(species)) %>% dplyr::pull(n)
-
-species_per_2858 <- dat_count %>%
-  dplyr::filter(year == this_year, pres_abs == TRUE, grts_cell_id == 2858) %>% 
-  group_by(grts_cell_id) %>% 
-  summarise(n = n_distinct(species)) %>% dplyr::pull(n)
+total_species_by_year <- dat_count %>% dplyr::filter(pres_abs == TRUE) %>%
+  group_by(year) %>% summarise(n = n_distinct(species))
 
 ```
 
-In `r this_year`, we confirmed the presence of `r total_species` bat species (see Table \@ref(tab:speciesthisyear)): `r species_per_106` in GRTS cell 106 and `r species_per_2858` in GRTS cell 2858.
+In `r this_year`, we confirmed the presence of `r total_species` bat species (see Table \@ref(tab:speciesthisyear)):
+```{r}
+for (i in seq(1:length(report_grts))){
+  cat(total_species_by_grts_this_year[i,]$n, "species in GRTS", total_species_by_grts_this_year[i,]$grts_cell_id, "\n")
+}
+```
 
-Over all years of monitoring, we confirmed `r all_total_species` bat species (see Table \@ref(tab:speciesallyears)):`r species_2020` in 2020 and `r species_2021` in GRTS cell 2021.
+Over all years of monitoring, we confirmed `r total_species_all_years` bat species (see Table \@ref(tab:speciesallyears)):
+`r species_2020` in 2020 and `r species_2021` in GRTS cell 2021.
+```{r}
+for (i in seq(1:nrow(total_species_by_year))){
+  cat(total_species_by_year[i,]$n, "species in ", total_species_by_year[i,]$year, "\n")
+}
+```
+
 
 
 ## Bat species confirmed in `r this_year`
