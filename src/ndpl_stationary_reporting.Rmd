@@ -145,7 +145,6 @@ spp_list <- spp_list %>% pivot_longer(., 2:length(spp_list)) %>%
 ```
 
 In `r this_year`, the `r partner` implemented acoustic bat monitoring protocols described in _A Plan for the North American Bat Monitoring Program (NABat)_. Stationary detectors were deployed within `r length(report_grts)` GRTS cell(s) for four consecutive nights each. The results of the stationary detectors are presented here. Full spectrum echolocation files were recorded using the detectors in Table \@ref(tab:meta). Figure \@ref(fig:Map) shows the location of each detector within the cell, and Section (Section \@ref(site-photos)) shows the habitat at each site.
-=======
 
 The resulting recording files were sent to Bat Conservation International (BCI) for identification of species presence. Data was checked, renamed, and attributed using a custom R and Python code developed by Conservation Metrics Inc (CMI) and the United States Geological Survey (USGS). Files were then scrubbed of noise using Sonobat Data Wizard 4.4. Sonobatch was used in Sonobat 4.4 set to the `r classifier` to determine call parameters and the suggested species identification. Files were then run through Kaleidoscope Pro 5.3.9, set to the `r kpro_region` region, to provide additional automated identification used in manual vetting. 
 
@@ -317,7 +316,6 @@ species_reference_table %>% dplyr::filter(species_code_6 %in% spp_list$name) %>%
   kable()
 ```
 
-
 ***
 
 # __Results__
@@ -429,8 +427,6 @@ species_count %>%
 
 ## GRTS cell Metadata
 
-
-
 ```{r sitemeta}
 
 metadata <- all_dat %>% 
@@ -489,7 +485,6 @@ survey_dates %>% flextable() %>%
 ```
 
 ***
-
 <!-- # __Example Sonograms__ -->
 
 ```{r}
@@ -508,7 +503,7 @@ for (i in seq(1, nrow(sonograms))){
   cat("<details>\n")
   cat(sprintf("<summary>Click to View Example Sonogram for <em>%s</em> detected at %s</summary>\n", 
               sonograms[i,]$species_scientific, sonograms[i,]$location_name))
-  cat(sprintf("[](%s)\n", sonograms[i,]$path))
+  cat(sprintf("![](%s)\n", sonograms[i,]$path))
   cat("</details>\n\n")
 }
 ```
