@@ -1,5 +1,5 @@
 ---
-title: "__Bat Acoustic Survey Results__"
+title: "__NABat Stationary Acoustic Survey Results__"
 date: "Report produced `r format(Sys.time(), '%d %B, %Y')`"
 output:
   bookdown::html_document2:
@@ -69,7 +69,8 @@ password = 'Myotisciliolabrum@9721'
 report_grts = c(106,2858)
 project_id = 353
 report_locations = ""
-forest_id <- "CentralCalDFW1"
+forest_id <- "BishopBLM_20220831"
+
 partner <- "USFS"
 table_path <- "../species tables/California.png"
 
@@ -139,14 +140,17 @@ subtracted_species <- lookup_t %>% filter(data_id==forest_id) %>% pull(Kal_subtr
 ```
 
 
+
 In `r this_year`, the `r partner` implemented acoustic bat monitoring protocols described in _A Plan for the North American Bat Monitoring Program (NABat)_. Stationary detectors were deployed within `r length(report_grts)` GRTS cell(s) for four consecutive nights each. The results of the stationary detectors are presented here. Full spectrum echolocation files were recorded using the detectors in Table \@ref(tab:meta). Figure \@ref(fig:Map) shows the location of each detector within the cell, and Section (Section \@ref(site-photos)) shows the habitat at each site.
+=======
+
 
 The resulting recording files were sent to Bat Conservation International (BCI) for identification of species presence. Data was checked, renamed, and attributed using a custom R and Python code developed by Conservation Metrics Inc (CMI) and the United States Geological Survey (USGS). Files were then scrubbed of noise using Sonobat Data Wizard 4.4. Sonobatch was used in Sonobat 4.4 set to the `r classifier` to determine call parameters and the suggested species identification. Files were then run through Kaleidoscope Pro 5.3.9, set to the `r kpro_region` region, to provide additional automated identification used in manual vetting. 
 
 ```{r results = 'asis'}
 if (all(is.na(added_species)) & all(is.na(subtracted_species))){
   cat("Based on species range maps from [Bat Conservation International](https://www.batcon.org/about-bats/bat-profiles) and [BatAMP](https://visualize.batamp.databasin.org/presence), the Kaleidoscope Pro species list was deemed appropriate and were not altered.")
-  print("\n")
+  cat("\n")
 } else if(!all(is.na(added_species)) & all(is.na(subtracted_species))){
   cat("Based on species range maps from [Bat Conservation International](https://www.batcon.org/about-bats/bat-profiles) and [BatAMP](https://visualize.batamp.databasin.org/presence), the Kaleidoscope Pro species list was customized to include the following species: \n")
   cat(added_species, sep = ", ")
@@ -191,7 +195,7 @@ margin: auto;
 }
 </style>
 
-```{r Map, fig.cap="\\label{fig:map}Map of surveyed locations"}
+```{r map, fig.cap="\\label{fig:map}Map of surveyed locations"}
 source(here::here("src", "map_function.R"))
 map <- make_map(all_dat, dat_count)
 unlink(here::here("geojson_files"), recursive = T) 
@@ -331,7 +335,10 @@ Over all years of monitoring, we confirmed `r all_total_species` bat species (se
 ## Bat species confirmed in `r this_year`
 
 ```{r speciesthisyear}
+
 exclude <- c("NOISE", NA, "25k","40k", "HighF", "LABLPAHE", "MYCAMYYU", "LowF", "MYSP")
+
+
 
 filtered_all_dat <- all_dat %>% 
   dplyr::filter(year == this_year) %>% 
@@ -394,15 +401,18 @@ species_count %>%
   bold(., bold = TRUE, part = "body") %>% 
   flextable::align(., align = "center", part = "all") %>%
   set_table_properties(., width = 1, layout = "autofit") %>%
-  set_caption("Presence (X) or not detected (blank cell) of bat species (listed in table 1) recorded at stationary sites every year.")
+  set_caption("Presence (X) or not detected (blank cell) of bat species recorded at stationary sites every year.")
 ```
 
 ***
 
 # __Metadata__
+
 ## GRTS cell Metadata
 
-```{r meta}
+
+
+```{r sitemeta}
 
 metadata <- all_dat %>% 
   dplyr::filter(year == this_year) %>% 
@@ -425,8 +435,10 @@ metadata %>% flextable() %>%
   bg(., bg = "light grey", part = "header") %>% 
   bold(., j = 1, bold = TRUE) %>%
   flextable::align(., align = "center", part = "all") %>% 
+
   set_table_properties(., layout = "autofit") %>% 
   set_caption(paste("Metadata for the GRTS cells surveyed in", this_year))
+
 
 ```
 
@@ -434,53 +446,55 @@ metadata %>% flextable() %>%
 
 ## Survey Date Metadata
 
-```{r Surveydates}
+```{r surveydates}
 survey_dates <- all_dat %>% 
   dplyr::group_by(grts_cell_id, location_name, year) %>% 
-  dplyr::summarise(start_date = min(recording_night), end_date = max(recording_night)) %>% 
+  dplyr::summarise(start_date = min(recording_night)) %>% 
+  mutate(start_date = ymd(start_date)) %>%
   arrange(., grts_cell_id, location_name, year) %>% 
-  mutate(grts_cell_id = as.character(grts_cell_id)) %>%    #gets rid  of commas in table output.
-  dplyr::select(-year)
+  mutate(month = lubridate::month(start_date, label=T, abbr=F), day = lubridate::day(start_date)) %>% 
+  unite('start', month:day, remove = T, sep = " ") %>% 
+  # mutate(grts_cell_id = as.character(grts_cell_id)) %>% 
+  pivot_wider(id_cols = c(grts_cell_id, location_name), names_from = year, values_from = start, values_fill = "-")
 
 survey_dates %>% flextable() %>% 
-  merge_v(j = c("grts_cell_id", "location_name")) %>% 
+  merge_v(j = "grts_cell_id") %>% 
   set_header_labels(.,
                     grts_cell_id = "GRTS Cell",
-                    location_name = "Location Name",
-                    start_date = "Survey Start Date",
-                    end_date = "Survey End Date",
-                    year = "Year") %>% 
+                    location_name = "Location Name") %>% 
   theme_box() %>% 
   bg(., bg = "grey", part = "header") %>% 
   flextable::align(., align = "center", part = "all") %>% 
   set_table_properties(., layout = "autofit") %>% 
-  set_caption("Survey dates for all years of monitoring")
+
+  set_caption("Survey start dates for each year for each detector location.")
+
 ```
 
 ***
 
-# __Example Sonograms__
+<!-- # __Example Sonograms__ -->
 
 ```{r}
-species_ref_list <- list.files(here::here("sonograms"), full.names = F) %>% str_split(pattern = "_", simplify=T) %>% .[,1]
-sonograms <- dat_count %>% 
-  dplyr::filter(pres_abs == TRUE) %>%
-  dplyr::group_by(species, species_scientific) %>% 
-  dplyr::distinct(species, species_scientific) %>% 
-  dplyr::summarise(sgram = case_when(
-    species %in% species_ref_list ~ sprintf("![%s](../sonograms/%s_sgram.png)", species_scientific, species),
-    !species %in% species_ref_list ~ "no sonogram available"
-  ))
+# species_ref_list <- list.files(here::here("sonograms"), full.names = F) %>% str_split(pattern = "_", simplify=T) %>% .[,1]
+# sonograms <- dat_count %>% 
+#   dplyr::filter(pres_abs == TRUE) %>%
+#   dplyr::group_by(species, species_scientific) %>% 
+#   dplyr::distinct(species, species_scientific) %>% 
+#   dplyr::summarise(sgram = case_when(
+#     species %in% species_ref_list ~ sprintf("![%s](../sonograms/%s_sgram.png)", species_scientific, species),
+#     !species %in% species_ref_list ~ "no sonogram available"
+#   ))
 ```
 
 ```{r, results='asis', eval=TRUE}
-# print photos under expandable GRTS cell labels
-for (i in seq(1, nrow(sonograms))){
-  cat("<details>\n")
-  cat(sprintf("<summary>Click to View Example Sonogram for <em>%s</em></summary>\n", sonograms[i,]$species_scientific))
-  cat(sonograms[i,]$sgram)
-  cat("</details>\n\n")
-}
+# # print photos under expandable GRTS cell labels
+# for (i in seq(1, nrow(sonograms))){
+#   cat("<details>\n")
+#   cat(sprintf("<summary>Click to View Example Sonogram for <em>%s</em></summary>\n", sonograms[i,]$species_scientific))
+#   cat(sonograms[i,]$sgram)
+#   cat("</details>\n\n")
+# }
 ```
 
 ***
