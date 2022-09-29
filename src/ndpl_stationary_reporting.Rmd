@@ -7,15 +7,6 @@ output:
     toc_float: yes
     theme: cerulean
     number_sections: true
-params:
-  project: NA
-  username: NA
-  password: NA
-  grts: NA
-  locations: NA
-  agency: NA
-  forest_id: NA
-  table_path: NA
 ---
 
 ```{r setup, include=FALSE}
