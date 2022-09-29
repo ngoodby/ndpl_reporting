@@ -342,14 +342,14 @@ total_species_by_year <- dat_count %>% dplyr::filter(pres_abs == TRUE) %>%
 In `r this_year`, we confirmed the presence of `r total_species_this_year` bat species (see Table \@ref(tab:speciesthisyear)):
 ```{r}
 for (i in seq(1:length(report_grts))){
-  cat(total_species_by_grts_this_year[i,]$n, "species in GRTS", total_species_by_grts_this_year[i,]$grts_cell_id, "\n")
+  cat(sprintf("%g species in GRTS %g \n", total_species_by_grts_this_year[i,]$n, total_species_by_grts_this_year[i,]$grts_cell_id))
 }
 ```
 
 Over all years of monitoring, we confirmed `r total_species_all_years` bat species (see Table \@ref(tab:speciesallyears)):
 ```{r}
 for (i in seq(1:nrow(total_species_by_year))){
-  cat(total_species_by_year[i,]$n, "species in ", total_species_by_year[i,]$year, "\n")
+  cat(sprintf("%g species in %g \n", total_species_by_year[i,]$n, total_species_by_year[i,]$year))
 }
 ```
 
@@ -508,7 +508,7 @@ for (i in seq(1, nrow(sonograms))){
   cat("<details>\n")
   cat(sprintf("<summary>Click to View Example Sonogram for <em>%s</em> detected at %s</summary>\n", 
               sonograms[i,]$species_scientific, sonograms[i,]$location_name))
-  cat(sonograms[i,]$path)
+  cat(sprintf("[](%s)\n", sonograms[i,]$path))
   cat("</details>\n\n")
 }
 ```
