@@ -61,10 +61,7 @@ report_grts = c(106,2858)
 project_id = 353
 report_locations = ""
 forest_id <- "BishopBLM_20220831"
-
 partner <- "USFS"
-table_path <- "../species tables/California.png"
-
 ```
 
 ![](../images/BCI_logo.png){height=100}
@@ -131,7 +128,6 @@ subtracted_species <- lookup_t %>% filter(data_id==forest_id) %>% pull(Kal_subtr
 ```
 
 ```{r}
-#
 spp_list <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/1UggTTGxYYmVM2FVpjHqn-q0AZLb-oqGKlJytg7r5JXg/edit?usp=sharing', sheet = "SB_Species_List") %>% mutate(keyword = strsplit(Species_List, ",")) %>% 
   unnest(keyword) %>% dplyr::select(-Species_List) %>% 
   group_by(State, keyword) %>% summarise(value = n()) %>% 
@@ -148,10 +144,8 @@ spp_list <- spp_list %>% pivot_longer(., 2:length(spp_list)) %>%
   dplyr::filter(value==1)
 ```
 
-
 In `r this_year`, the `r partner` implemented acoustic bat monitoring protocols described in _A Plan for the North American Bat Monitoring Program (NABat)_. Stationary detectors were deployed within `r length(report_grts)` GRTS cell(s) for four consecutive nights each. The results of the stationary detectors are presented here. Full spectrum echolocation files were recorded using the detectors in Table \@ref(tab:meta). Figure \@ref(fig:Map) shows the location of each detector within the cell, and Section (Section \@ref(site-photos)) shows the habitat at each site.
 =======
-
 
 The resulting recording files were sent to Bat Conservation International (BCI) for identification of species presence. Data was checked, renamed, and attributed using a custom R and Python code developed by Conservation Metrics Inc (CMI) and the United States Geological Survey (USGS). Files were then scrubbed of noise using Sonobat Data Wizard 4.4. Sonobatch was used in Sonobat 4.4 set to the `r classifier` to determine call parameters and the suggested species identification. Files were then run through Kaleidoscope Pro 5.3.9, set to the `r kpro_region` region, to provide additional automated identification used in manual vetting. 
 
@@ -300,7 +294,7 @@ for (i in seq(1, length(grts_long_photo_paths))){
 
 # __Potential Species__
 
-![Species that may occur in surveyed area of the `r partner` and the specific and general categories in which they are included. ](`r table_path`)
+Species that may occur in surveyed area of the `r partner` and the specific and general categories in which they are included.
 
 ```{r species frequency table}
 #get list of available sonogram images in the "sonograms" folder
@@ -359,8 +353,6 @@ for (i in seq(1:nrow(total_species_by_year))){
   cat(total_species_by_year[i,]$n, "species in ", total_species_by_year[i,]$year, "\n")
 }
 ```
-
-
 
 ## Bat species confirmed in `r this_year`
 
