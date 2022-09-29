@@ -1,0 +1,518 @@
+---
+title: "__NABat Stationary Acoustic Survey Results__"
+date: "Report produced `r format(Sys.time(), '%d %B, %Y')`"
+output:
+  bookdown::html_document2:
+    toc: yes
+    toc_float: yes
+    theme: cerulean
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      message = FALSE,
+                      fig.align = "center")
+```
+
+```{r results = 'hide'}
+  library(tidyverse)
+  library(rstudioapi)
+  library(devtools)
+  library(htmltools)
+  library(htmlwidgets)
+  library(httr)
+  library(jsonlite)
+  library(leaflet)
+  library(lubridate)
+  library(magrittr)
+  library(maps)
+  library(maptools)
+  library(officer)
+  library(plotly)
+  library(raster)
+  library(rgdal)
+  library(rmarkdown)
+  library(sp)
+  library(xml2)
+  library(terra)
+  library(nabatr)
+  library(flextable)
+  library(leaflet)
+  library(janitor)
+  library(sf)
+  library(knitr)
+  library(data.table)
+  library(scales)
+  library(kableExtra)
+  library(magick)
+  library(webshot)
+  library(reticulate)
+  library(googlesheets4)
+  library(readxl)
+```
+
+```{r Inputs}
+
+username = 'clong@batcon.org'
+password = 'Myotisciliolabrum@9721'
+report_grts = c(106,2858)
+project_id = 353
+report_locations = ""
+forest_id <- "BishopBLM_20220831"
+partner <- "USFS"
+```
+
+![](../images/BCI_logo.png){height=100}
+
+```{r results='asis'}
+# partner name needs to match file name of the logo
+logos <- list.files(here::here("logos"), full.names = F)
+if (paste0(partner, ".png") %in% logos){
+  cat(sprintf('![](../logos/%s)', paste0(partner, ".png")))
+  cat("{height=100}")
+}
+```
+
+```{r shiny parameters}
+# report_grts <- params$grts %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both")) %>% as.numeric()
+# report_locations <- params$locations %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both"))
+# username = params$username
+# password = params$password
+# project_id = params$project %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both")) %>% as.numeric()
+# partner = params$agency
+# table_path = params$table_path
+# forest_id <- params$forest_id
+```
+
+```{r NABat API, results = 'hide'}
+source(here::here("src", "load_nabat_data_function.R"))
+data <- load_nabat_data(username, password, project_id, report_grts, report_locations)
+all_dat <- data[[1]]
+dat_count <- data[[2]]
+sa_survey_df <- data[[3]]
+this_year = max(all_dat$year)
+```
+
+```{r}
+#joining csv of scientific and common names for species and links
+species_reference_table <- read.csv(here::here("data", "species_reference_table.csv"))
+detector_codes <- read_excel(here::here("data", "detector_id_values.xlsx"))
+mic_codes <- read_excel(here::here("data","mic_id_values.xlsx"))
+dat_count <- dat_count %>% left_join(species_reference_table, by = c("species" = "species_code"), keep=F)
+all_dat <- all_dat %>% left_join(species_reference_table, 
+                                 by = c("species_code" = "species_code", 
+                                        "species_code_6"="species_code_6"), keep=F) %>% 
+  mutate("common_name" = common_name.y) %>% dplyr::select(-common_name.x, -common_name.y) %>% 
+  left_join(detector_codes, by = c("detector_type_id"="id")) %>% 
+  left_join(mic_codes, by = c("microphone_type_id"="id"))
+current_year <- as.character(this_year)
+```
+
+***
+
+# __Methods__
+
+```{r}
+#get classifier info from Google
+lookup_t <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/1UggTTGxYYmVM2FVpjHqn-q0AZLb-oqGKlJytg7r5JXg/edit?usp=sharing', sheet = "2022")
+classifier <- lookup_t %>% filter(data_id==forest_id) %>% pull(Species_List)
+kpro_region <- lookup_t %>% filter(data_id==forest_id) %>% pull(Kal_Classifier)
+added_species <- lookup_t %>% filter(data_id==forest_id) %>% pull(Kal_addspp) %>% 
+  as_tibble() %>% separate_rows(.,1,sep = ",") %>% mutate("value" = str_trim(.$value)) %>% 
+  left_join(., species_reference_table, by=c("value" = "species_code_6")) %>% dplyr::select(value, common_name)
+subtracted_species <- lookup_t %>% filter(data_id==forest_id) %>% pull(Kal_subtrspp) %>% 
+  as_tibble() %>% separate_rows(.,1,sep = ",") %>% mutate("value" = str_trim(.$value)) %>% 
+  left_join(., species_reference_table, by=c("value" = "species_code_6")) %>% dplyr::select(value, common_name)
+```
+
+```{r}
+spp_list <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/1UggTTGxYYmVM2FVpjHqn-q0AZLb-oqGKlJytg7r5JXg/edit?usp=sharing', sheet = "SB_Species_List") %>% mutate(keyword = str_split(Species_List, ",")) %>% 
+  unnest(keyword) %>% dplyr::select(-Species_List) %>% 
+  group_by(Classifier, keyword) %>% summarise(value = n()) %>% 
+  pivot_wider(names_from = keyword, values_from = value, values_fill = 0) %>% 
+  dplyr::select(-any_of(subtracted_species$value)) %>% #remove species from the classifier
+  dplyr::filter(Classifier == classifier) #filter to the classifier of interest 
+
+#add species to the classifier
+extra <- data.frame(matrix(data = 1, nrow = nrow(spp_list), ncol = length(subtracted_species$value)))
+colnames(extra) <- unlist(subtracted_species$value)
+spp_list <- dplyr::bind_cols(spp_list, extra)
+
+spp_list <- spp_list %>% pivot_longer(., 2:length(spp_list)) %>% 
+  dplyr::filter(value==1)
+```
+
+In `r this_year`, the `r partner` implemented acoustic bat monitoring protocols described in _A Plan for the North American Bat Monitoring Program (NABat)_. Stationary detectors were deployed within `r length(report_grts)` GRTS cell(s) for four consecutive nights each. The results of the stationary detectors are presented here. Full spectrum echolocation files were recorded using the detectors in Table \@ref(tab:meta). Figure \@ref(fig:Map) shows the location of each detector within the cell, and Section (Section \@ref(site-photos)) shows the habitat at each site.
+
+The resulting recording files were sent to Bat Conservation International (BCI) for identification of species presence. Data was checked, renamed, and attributed using a custom R and Python code developed by Conservation Metrics Inc (CMI) and the United States Geological Survey (USGS). Files were then scrubbed of noise using Sonobat Data Wizard 4.4. Sonobatch was used in Sonobat 4.4 set to the `r classifier` to determine call parameters and the suggested species identification. Files were then run through Kaleidoscope Pro 5.3.9, set to the `r kpro_region` region, to provide additional automated identification used in manual vetting. 
+
+```{r results = 'asis'}
+#print added and subtracted species depending on whether any were add/removed or not
+if (all(is.na(added_species)) & all(is.na(subtracted_species))){
+  cat("Based on species range maps from [Bat Conservation International](https://www.batcon.org/about-bats/bat-profiles) and [BatAMP](https://visualize.batamp.databasin.org/presence), the Kaleidoscope Pro species list was deemed appropriate and were not altered.")
+  cat("\n")
+} else if(!all(is.na(added_species)) & all(is.na(subtracted_species))){
+  cat("Based on species range maps from [Bat Conservation International](https://www.batcon.org/about-bats/bat-profiles) and [BatAMP](https://visualize.batamp.databasin.org/presence), the Kaleidoscope Pro species list was customized to include the following species: \n")
+  cat(added_species$common_name, sep = ", ")
+  cat(". \n")
+} else if(all(is.na(added_species)) & all(!is.na(subtracted_species))){
+  cat("Based on species range maps from [Bat Conservation International](https://www.batcon.org/about-bats/bat-profiles) and [BatAMP](https://visualize.batamp.databasin.org/presence), the Kaleidoscope Pro species list was customized to exclude the following species: \n")
+  cat(subtracted_species$common_name, sep = ", ")
+  cat(". \n")
+} else{
+  cat("Based on species range maps from [Bat Conservation International](https://www.batcon.org/about-bats/bat-profiles) and [BatAMP](https://visualize.batamp.databasin.org/presence), the Kaleidoscope Pro species list was customized to include the following species:\n")
+  cat(added_species$common_name, sep = ", ")
+  cat(". \n\n")
+  cat("The species list was further customized to exclude the following species:\n")
+  cat(subtracted_species$common_name, sep = ", ")
+  cat(". \n")
+}
+```
+
+Sonobat 4.4 was then used to manually identify files.
+
+We attempted to confirm the identification of a maximum of three files per species, per night, per site by visually inspecting the species ID proposed by Sonobat 4.4. Up to 10 files per species-site-night were reviewed in an attempt to confirm the species ID of 3 files. Review options included:
+
+1. Confirming species as assigned by the programs; 
+
+2. Assigning the file to a species couplet, or frequency category based on the frequency and call shape (Section \@ref(potential-species)); 
+
+3. Assigning the file to a species other than what was assigned by the programs; or 
+
+4. Assigning the files as noise, i.e., not a recording of bat echolocation calls. 
+
+We reviewed files in order of confidence in identification as expressed by the program. A confirmed identification of a species in one or more files on a given night at a given site resulted in a designation of species presence for that site-night. Identification of up to three files added an additional measure of confidence to species presence designations. When we could not assign any files recorded on a site-night to species, that species was considered “not detected.”
+
+***
+
+# __Map of Survey Locations__
+
+This map shows the survey locations included in this report and the NABat cell(s) that they fall within. Hover your cursor over the map to see the NABat GRTS cell number(s) and survey location name(s).
+
+<style>
+.html-widget {
+margin: auto;
+}
+</style>
+
+```{r map, fig.cap="\\label{fig:map}Map of surveyed locations"}
+source(here::here("src", "map_function.R"))
+map <- make_map(all_dat, dat_count)
+unlink(here::here("geojson_files"), recursive = T) 
+dir.create(here::here("geojson_files"))
+sf::st_write(map[[2]], dsn = here::here("geojson_files", paste0("grts_boundaries_", Sys.Date(), ".geojson")), layer = "grts_boundaries.geojson", delete_dsn = T, quiet=T)
+sf::st_write(map[[3]], dsn = here::here("geojson_files",  paste0("site_locs_", Sys.Date(), ".geojson")), layer = "site_locs.geojson", delete_dsn = T, quiet=T)
+map[[1]]
+```
+
+***
+
+# __Site Photos__
+
+```{r habitat}
+# load function to pull photos from NABat AWS webserver
+source(here::here("src","site_photos.R"))
+# run function for all survey events and store outputs
+photo_queries <- sa_survey_df %>% dplyr::select(project_id, survey_id, survey_event_id) %>% distinct()
+pics=list()
+for (i in seq(1, nrow(photo_queries))){
+  proj_id = photo_queries[i,1]
+  surv_num = photo_queries[i,2]
+  surv_id = photo_queries[i,3]
+  photos_out = get_site_photos(username, password, proj_id, surv_num, surv_id)
+  pics = append(pics, list(photos_out))
+}
+```
+
+```{r}
+# delete site_photos folder from previous reports generated
+unlink(here::here("site_photos"), recursive = T)
+
+# create folders for each survey site and put the relevant photos into them
+for (i in seq(1, length(pics))){
+  grts <- sa_survey_df[i,]$grts_cell_id
+  loc <- sa_survey_df[i,]$event
+  dir.create(here::here("site_photos", grts, loc), recursive=T)
+  for (pic in seq(1, length(pics[[i]]))){
+    photo <- pics[[i]][pic]
+    path <- here::here("site_photos", grts, loc, paste0(pic, ".jpg"))
+    photo <- image_scale(photo, "350x350!")
+    image_write(photo, path)
+  }
+}
+
+# get paths to photos
+files <- list.files(path = here::here("site_photos"),
+                    pattern = "^.*.jpg$",
+                    full.names = T,
+                    recursive = T)
+files_short <- list.files(path = here::here("site_photos"),
+                    pattern = "^.*.jpg$",
+                    full.names = F,
+                    recursive = T)
+
+# organize paths by GRTS cell
+photo_grts <- as.character(report_grts)
+grts_short_photo_paths <- list()
+grts_long_photo_paths <- list()
+for(g in photo_grts){
+  long_paths <- files %>% str_subset(pattern = g)
+  short_paths <- files_short %>% str_subset(pattern = g)
+  grts_short_photo_paths <- append(grts_short_photo_paths, list(short_paths))
+  grts_long_photo_paths <- append(grts_long_photo_paths, list(long_paths))
+}
+
+# create captions for photos
+cells <- list()
+sites <- list()
+captions <- list()
+for (i in seq(1, length(report_grts))){
+  c <- grts_short_photo_paths[[i]] %>% strsplit( "/" ) %>% sapply( "[", 1 )
+  s <- grts_short_photo_paths[[i]] %>% strsplit( "/" ) %>% sapply( "[", 2 )
+  caps <- str_c("NABat Cell ", c, "; Survey Site: ", s, sep = "")
+  cells <- append(cells, list(c))
+  sites <- append(sites, list(s))
+  captions <- append(captions, list(caps))
+}
+```
+
+```{r, results='asis', eval=TRUE}
+# print photos under expandable GRTS cell labels
+for (i in seq(1, length(grts_long_photo_paths))){
+  cat("<details>\n")
+  cat(sprintf("<summary>Click to View Site Photos for GRTS %s</summary>\n", report_grts[i]))
+  for(j in seq(1, length(grts_long_photo_paths[[i]]))){
+    cat(sprintf('![%s](%s)\n', captions[[i]][j], grts_long_photo_paths[[i]][j]), sep = '\n')
+  }
+  cat("</details>\n\n")
+}
+```
+
+
+# __Potential Species__
+
+Species that may occur in surveyed area of the `r partner` and the specific and general categories in which they are included.
+
+```{r species frequency table}
+#get list of available sonogram images in the "sonograms" folder
+available_sgrams <- list.files(here::here("sonograms"), full.names = F) %>% str_split(pattern = "_", simplify=T) %>% .[,1]
+
+#create hyperlinks for the frequency table output
+species_reference_table %>% dplyr::filter(species_code_6 %in% spp_list$name) %>% 
+  mutate(freq_range = case_when(
+    species_code %in% available_sgrams ~ sprintf("![%s](../sonograms/%s.png)", freq_range, species_code),
+    !species_code %in% available_sgrams ~freq_range
+  )) %>% 
+  mutate(species_scientific = case_when(
+    is.na(species_url) ~ species_scientific,
+    !is.na(species_url) ~ sprintf("![*%s*](%s)", species_scientific, species_url)
+  )) %>% 
+  dplyr::select(species_scientific, common_name, freq_range) %>% 
+  rename("Scientific Name" = species_scientific, 
+         "Common Name" = common_name,
+         "Characteristic Frequency Range" = freq_range) %>% 
+  kable()
+```
+
+***
+
+# __Results__
+
+```{r}
+total_species_this_year <- dat_count %>% dplyr::filter(year == this_year, pres_abs == TRUE) %>%
+  group_by(year) %>% summarise(n = n_distinct(species)) %>% dplyr::pull(n)
+
+total_species_all_years <- dat_count  %>% 
+  dplyr::filter(pres_abs == TRUE) %>% 
+  group_by(pres_abs) %>% summarise(n = n_distinct(species)) %>% 
+  dplyr::pull(n)
+
+total_species_by_grts_this_year <- dat_count %>% dplyr::filter(year == this_year, pres_abs == TRUE) %>%
+  group_by(grts_cell_id) %>% summarise(n = n_distinct(species))
+
+total_species_by_year <- dat_count %>% dplyr::filter(pres_abs == TRUE) %>%
+  group_by(year) %>% summarise(n = n_distinct(species))
+
+```
+
+In `r this_year`, we confirmed the presence of `r total_species_this_year` bat species (see Table \@ref(tab:speciesthisyear)):
+```{r}
+for (i in seq(1:length(report_grts))){
+  cat(sprintf("%g species in GRTS %g \n", total_species_by_grts_this_year[i,]$n, total_species_by_grts_this_year[i,]$grts_cell_id))
+}
+```
+
+Over all years of monitoring, we confirmed `r total_species_all_years` bat species (see Table \@ref(tab:speciesallyears)):
+```{r}
+for (i in seq(1:nrow(total_species_by_year))){
+  cat(sprintf("%g species in %g \n", total_species_by_year[i,]$n, total_species_by_year[i,]$year))
+}
+```
+
+## Bat species confirmed in `r this_year`
+
+```{r speciesthisyear}
+
+exclude <- c("NOISE", NA, "25k","40k", "HighF", "LABLPAHE", "MYCAMYYU", "LowF", "MYSP")
+
+filtered_all_dat <- all_dat %>% 
+  dplyr::filter(year == this_year) %>% 
+  dplyr::filter(!species_code %in% exclude) %>%
+  separate_rows(species_code)
+
+species_table_this_year <- filtered_all_dat %>% 
+  group_by(grts_cell_id, location_name, recording_night, species_code) %>% 
+  summarise(num_confirmed_files = n()) %>% 
+  arrange(., species_code) %>% 
+  pivot_wider(names_from = species_code, 
+              values_from = num_confirmed_files,
+              values_fill = ) %>% 
+  arrange(., grts_cell_id, location_name, recording_night) %>% 
+  mutate(grts_cell_id = as.character(grts_cell_id)) %>% 
+  rename("GRTS Cell" = grts_cell_id, "Location Name"=location_name, "Monitoring Night"=recording_night)
+     
+species_table_this_year %>%
+  flextable(col_keys = names(.)) %>% 
+  merge_v(., j=c("Location Name", "GRTS Cell")) %>% 
+  theme_box() %>%
+  bg(., bg = "light blue", part = "header") %>% 
+  flextable::align(., align = "center", part = "all") %>%
+  bold(., j = 1, bold = TRUE) %>% 
+  set_table_properties(., width = 1, layout = "autofit") %>% 
+set_caption(paste("Number of files confirmed for each species and species group detected per site and night at stationary sites in ", this_year))
+```
+
+***
+
+## Bat species confirmed each year
+
+```{r speciesallyears}
+sub_x <- function(x){
+  if_else(x==TRUE, "X","")
+}
+
+#tally of species by site
+species_count <- dat_count %>% 
+  dplyr::group_by(grts_cell_id, year, species) %>% 
+  dplyr::summarise(species_presence = any(pres_abs)) %>% 
+  pivot_wider(names_from = c(year, grts_cell_id),
+              values_from = species_presence) %>% 
+  mutate_if(is.logical, sub_x) %>% 
+  rename("Species"=species)
+
+table_names <- names(species_count) %>% str_split(pattern = "_", simplify=T)
+table_names[1,2] <- "Species"
+
+species_count %>%
+  flextable(col_keys = names(.)) %>%
+  delete_part(part = "header") %>%
+  add_header_row(values = as.list(table_names[,1])) %>%
+  add_header_row(values = as.list(table_names[,2])) %>%
+  merge_h(part = "header") %>%
+  merge_v(part = "header") %>% 
+  theme_box() %>%
+  bg(., bg = "light gray", part = "header", i=1, j=c(2:length(table_names[,1]))) %>% 
+  bg(., bg = "light blue", part = "header", i=2) %>% 
+  bold(., bold = TRUE, part = "body") %>% 
+  flextable::align(., align = "center", part = "all") %>%
+  set_table_properties(., width = 1, layout = "autofit") %>%
+  set_caption("Presence (X) or not detected (blank cell) of bat species recorded at stationary sites every year.")
+```
+
+***
+
+# __Metadata__
+
+## GRTS cell Metadata
+
+```{r sitemeta}
+
+metadata <- all_dat %>% 
+  dplyr::filter(year == this_year) %>% 
+  dplyr::group_by(grts_cell_id, location_name, detector_model, detector_serial_number, mic_type) %>% 
+ dplyr::summarise(Latitude = mean(latitude), Longitude = mean(longitude)) %>% 
+ mutate(grts_cell_id = as.character(grts_cell_id))
+    
+
+metadata %>% flextable() %>% 
+  merge_v(j = "grts_cell_id") %>% 
+  set_header_labels(.,
+                    grts_cell_id = "GRTS Cell",
+                    location_name = "Location Name",
+                    detector_model = "Detector Type",
+                    detector_serial_number = "Detector Serial #",
+                    mic_type = "Microphone Type") %>% 
+  theme_box() %>% 
+  bg(., bg = "light grey", part = "header") %>% 
+  bold(., j = 1, bold = TRUE) %>%
+  flextable::align(., align = "center", part = "all") %>% 
+
+  set_table_properties(., layout = "autofit") %>% 
+  set_caption(paste("Metadata for the GRTS cells surveyed in", this_year)) %>% 
+  colformat_char(na_str = "-")
+
+```
+
+***
+
+## Survey Date Metadata
+
+```{r surveydates}
+survey_dates <- all_dat %>% 
+  dplyr::group_by(grts_cell_id, location_name, year) %>% 
+  dplyr::summarise(start_date = min(recording_night)) %>% 
+  mutate(start_date = ymd(start_date)) %>%
+  arrange(., grts_cell_id, location_name, year) %>% 
+  mutate(month = lubridate::month(start_date, label=T, abbr=F), day = lubridate::day(start_date)) %>% 
+  unite('start', month:day, remove = T, sep = " ") %>% 
+  # mutate(grts_cell_id = as.character(grts_cell_id)) %>% 
+  pivot_wider(id_cols = c(grts_cell_id, location_name), names_from = year, values_from = start, values_fill = "-")
+
+survey_dates %>% flextable() %>% 
+  merge_v(j = "grts_cell_id") %>% 
+  set_header_labels(.,
+                    grts_cell_id = "GRTS Cell",
+                    location_name = "Location Name") %>% 
+  theme_box() %>% 
+  bg(., bg = "grey", part = "header") %>% 
+  flextable::align(., align = "center", part = "all") %>% 
+  set_table_properties(., layout = "autofit") %>% 
+
+  set_caption("Survey start dates for each year for each detector location.")
+
+```
+
+***
+<!-- # __Example Sonograms__ -->
+
+```{r}
+# name files "speciesCode_locationName.png" (e.g. "ANPA_Water Tank.png")
+sgram_list <- list.files(here::here("report_specific_sonograms"), full.names = F) %>% str_split(pattern = "_|\\.", simplify=T) %>%
+  data.frame() %>% dplyr::select(-X3) 
+names(sgram_list) <- c("species", "location_name")
+sgram_paths <- list.files(here::here("report_specific_sonograms"), full.names = T) %>% data.frame()
+names(sgram_paths) <- "path"
+sonograms <- bind_cols(sgram_list, sgram_paths) %>% left_join(species_reference_table, by = c("species" = "species_code"))
+```
+
+```{r, results='asis', eval=TRUE}
+# print photos under expandable labels
+for (i in seq(1, nrow(sonograms))){
+  cat("<details>\n")
+  cat(sprintf("<summary>Click to View Example Sonogram for <em>%s</em> detected at %s</summary>\n", 
+              sonograms[i,]$species_scientific, sonograms[i,]$location_name))
+  cat(sprintf("![](%s)\n", sonograms[i,]$path))
+  cat("</details>\n\n")
+}
+```
+
+***
+
+# __Learn More__
+
+To learn more about bats and to support their conservation visit [batcon.org](https://www.batcon.org/).\n
+
+![](../images/NABat_logo.png){height="200"}
+
