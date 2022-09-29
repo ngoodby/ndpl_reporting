@@ -128,15 +128,15 @@ subtracted_species <- lookup_t %>% filter(data_id==forest_id) %>% pull(Kal_subtr
 ```
 
 ```{r}
-spp_list <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/1UggTTGxYYmVM2FVpjHqn-q0AZLb-oqGKlJytg7r5JXg/edit?usp=sharing', sheet = "SB_Species_List") %>% mutate(keyword = strsplit(Species_List, ",")) %>% 
+spp_list <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/1UggTTGxYYmVM2FVpjHqn-q0AZLb-oqGKlJytg7r5JXg/edit?usp=sharing', sheet = "SB_Species_List") %>% mutate(keyword = str_split(Species_List, ",")) %>% 
   unnest(keyword) %>% dplyr::select(-Species_List) %>% 
-  group_by(State, keyword) %>% summarise(value = n()) %>% 
+  group_by(Classifier, keyword) %>% summarise(value = n()) %>% 
   pivot_wider(names_from = keyword, values_from = value, values_fill = 0) %>% 
   dplyr::select(-any_of(subtracted_species$value)) %>% #remove species from the classifier
   dplyr::filter(Classifier == classifier) #filter to the classifier of interest 
 
 #add species to the classifier
-extra <- data.frame(matrix(data = 1, nrow =nrow(spp_list), ncol = length(subtracted_species$value)))
+extra <- data.frame(matrix(data = 1, nrow = nrow(spp_list), ncol = length(subtracted_species$value)))
 colnames(extra) <- unlist(subtracted_species$value)
 spp_list <- dplyr::bind_cols(spp_list, extra)
 
@@ -339,7 +339,7 @@ total_species_by_year <- dat_count %>% dplyr::filter(pres_abs == TRUE) %>%
 
 ```
 
-In `r this_year`, we confirmed the presence of `r total_species` bat species (see Table \@ref(tab:speciesthisyear)):
+In `r this_year`, we confirmed the presence of `r total_species_this_year` bat species (see Table \@ref(tab:speciesthisyear)):
 ```{r}
 for (i in seq(1:length(report_grts))){
   cat(total_species_by_grts_this_year[i,]$n, "species in GRTS", total_species_by_grts_this_year[i,]$grts_cell_id, "\n")
@@ -347,7 +347,6 @@ for (i in seq(1:length(report_grts))){
 ```
 
 Over all years of monitoring, we confirmed `r total_species_all_years` bat species (see Table \@ref(tab:speciesallyears)):
-`r species_2020` in 2020 and `r species_2021` in GRTS cell 2021.
 ```{r}
 for (i in seq(1:nrow(total_species_by_year))){
   cat(total_species_by_year[i,]$n, "species in ", total_species_by_year[i,]$year, "\n")
