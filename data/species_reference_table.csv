@@ -1,9 +1,9 @@
 species_scientific,spp_abbrev,common_name,species_code,species_url,species_full_name,freq_range,species_couplet_category,species_freq_category,general_category,species_code_6
 Eptesicus fuscus,EPFUS,Big Brown Bat,EPFU,https://www.batcon.org/bat/eptesicus-fuscus,Big Brown Bat (Eptesicus fuscus),24-34,,Q25k,LoF,EPTFUS
 Myotis yumanensis,MYYUM,Yuma Myotis,MYYU,https://www.batcon.org/bat/myotis-yumanensis,Yuma Myotis (Myotis yumanensis),47-51,MYCAMYYU,Q50k,HiF,MYOYUM
-Eumops perotis,EUPER,Western Mastiff Bat,EUPE,https://www.batcon.org/bat/eumops-perotis,Western Mastiff Bat (Eumops perotis),16-Jul,EUMAEUPE,"Q10k, Q15k",LoF,EUMPER
+Eumops perotis,EUPER,Western Mastiff Bat,EUPE,https://www.batcon.org/bat/eumops-perotis,Western Mastiff Bat (Eumops perotis),44758,EUMAEUPE,"Q10k, Q15k",LoF,EUMPER
 Nyctinomops femorosaccus,NYFEM,Pocketed Free-tailed Bat,NYFE,https://www.batcon.org/bat/nyctinomops-femorosaccus,Pocketed Free-tailed Bat (Nyctinomops femorosaccus),14-19,NYFENYMA,,LoD,NYCFEM
-Nyctinomops macrotis,NYMAC,Big Free-tailed Bat,NYMA,https://www.batcon.org/bat/nyctinomops-macrotis,Big Free-tailed Bat (Nyctinomops macrotis),15-Nov,"NYFENYMA, LACINYFE",,LoF,NYCMAC
+Nyctinomops macrotis,NYMAC,Big Free-tailed Bat,NYMA,https://www.batcon.org/bat/nyctinomops-macrotis,Big Free-tailed Bat (Nyctinomops macrotis),,"NYFENYMA, LACINYFE",,LoF,NYCMAC
 Mormoops megalophylla,MOMEG,Peters's Ghost-faced Bat,MOME,https://www.batcon.org/bat/mormoops-megalophylla,Peters's Ghost-faced Bat (Mormoops megalophylla),,,,,MORMEG
 Myotis thysanodes,MYTHY,Fringed Myotis,MYTH,https://www.batcon.org/bat/myotis-thysanodes,Fringed Myotis (Myotis thysanodes),23-32,MYEVMYTH,Q25k,LoF,MYOTHY
 Lasionycteris noctivagans,LANOC,Silver-haired Bat,LANO,https://www.batcon.org/bat/lasionycteris-noctivagans,Silver-haired Bat (Lasionycteris noctivagans),25-28,"LANOTABR, LAINLANO",Q25k,LoF,LASNOC
@@ -20,13 +20,13 @@ Corynorhinus townsendii,COTOW,Townsend's Big-eared Bat,COTO,https://www.batcon.o
 Myotis evotis,MYEVO,Long-eared Myotis,MYEV,https://www.batcon.org/bat/myotis-evotis,Long-eared Myotis (Myotis evotis),32-46,MYEVMYTH,,HiF,MYOEVO
 Antrozous pallidus,ANPAL,Pallid Bat,ANPA,https://www.batcon.org/bat/antrozous-pallidus,Pallid Bat (Antrozous pallidus),24-34,,Q25k,LoF,ANTPAL
 Parastrellus hesperus,PAHES,Canyon Bat,PAHE,https://www.batcon.org/bat/parastrellus-hesperus,Canyon Bat (Parastrellus hesperus),41-47,LABLPAHE,Q40k,HiF,PARHES
-Idionycteris phyllotis,IDPHY,Allen's Big-eared Bat,IDPH,https://www.batcon.org/bat/idionycteris-phyllotis,Allen's Big-eared Bat (Idionycteris phyllotis),18-Sep,"EUPEIDPH, IDPHNYMA","Q10k, Q15k",LoF,IDIPHY
+Idionycteris phyllotis,IDPHY,Allen's Big-eared Bat,IDPH,https://www.batcon.org/bat/idionycteris-phyllotis,Allen's Big-eared Bat (Idionycteris phyllotis),44822,"EUPEIDPH, IDPHNYMA","Q10k, Q15k",LoF,IDIPHY
 Myotis occultus,MYOCC,Arizona Myotis,MYOC,https://www.batcon.org/bat/myotis-occultus,Arizona Myotis (Myotis occultus),,,,,MYOOCC
 Myotis ciliolabrum,MYCIL,Western Small-footed Myotis,MYCI,https://www.batcon.org/bat/myotis-ciliolabrum,Western Small-footed Myotis (Myotis ciliolabrum),38-46,MY40,Q40k,HiF,MYOCIL
 Myotis melanorhinus,MYMEL,Dark-nosed Small-footed Myotis,MYME,https://en.wikipedia.org/wiki/Dark-nosed_small-footed_myotis,Dark-nosed Small-footed Myotis (Myotis melanorhinus),,,,,MYOMEL
 Perimyotis subflavus,PESUB,Tricolored Bat,PESU,https://www.batcon.org/article/tri-colored-bat/,Tricolored Bat (Perimyotis subflavus),41-44,LABLPESU,Q40k,HiF,PERSUB
 Myotis velifer,MYVEL,Cave Myotis,MYVE,https://www.batcon.org/bat/myotis-velifer,Cave Myotis (Myotis velifer),,MY40,Q40k,HiF,MYOVEL
-Euderma maculatum,EUMAC,Spotted Bat,EUMA,https://www.batcon.org/bat/euderma-maculatum,Spotted Bat (Euderma maculatum),12-Sep,EUMAEUPE,"Q10k, Q15k",LoF,EUDMAC
+Euderma maculatum,EUMAC,Spotted Bat,EUMA,https://www.batcon.org/bat/euderma-maculatum,Spotted Bat (Euderma maculatum),44816,EUMAEUPE,"Q10k, Q15k",LoF,EUDMAC
 Lasiurus blossevillii,LABLO,Western Red Bat,LABL,https://www.batcon.org/bat/lasiurus-blossevillii,Western Red Bat (Lasiurus blossevillii),36-53,LABLPAHE,"Q40k, Q50k",HiF,LASBLO
 Lasiurus intermedius,LAINT,Northern Yellow Bat,LAIN,https://www.batcon.org/bat/lasiurus-intermedius,Northern Yellow Bat (Lasiurus intermedius),,"LAINLANO, LABOLAIN",Q25k,LoF,LASINT
 Lasiurus seminolus,LASEM,Seminole Bat,LASE,https://www.batcon.org/bat/lasiurus-seminolus,Seminole Bat (Lasiurus seminolus),,LABOLASE,Q40k,HiF,LASSEM
