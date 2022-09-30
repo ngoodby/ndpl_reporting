@@ -337,17 +337,17 @@ total_species_by_year <- dat_count %>% dplyr::filter(pres_abs == TRUE) %>%
 
 ```
 
-**In `r this_year`, we confirmed the presence of `r total_species_this_year` bat species (see Table \@ref(tab:speciesthisyear)):**
+***In `r this_year`, we confirmed the presence of `r total_species_this_year` bat species (see Table \@ref(tab:speciesthisyear)):***
 ```{r results='asis'}
 for (i in seq(1:length(report_grts))){
-  cat(sprintf("\n \t %g species in GRTS %g \n", total_species_by_grts_this_year[i,]$n, total_species_by_grts_this_year[i,]$grts_cell_id))
+  cat(sprintf("\n \t %g species in GRTS %g", total_species_by_grts_this_year[i,]$n, total_species_by_grts_this_year[i,]$grts_cell_id))
 }
 ```
 
-**Over all years of monitoring, we confirmed `r total_species_all_years` bat species (see Table \@ref(tab:speciesallyears)):**
+***Over all years of monitoring, we confirmed `r total_species_all_years` bat species (see Table \@ref(tab:speciesallyears)):***
 ```{r results='asis'}
 for (i in seq(1:nrow(total_species_by_year))){
-  cat(sprintf("\n \t %g species in %g \n", total_species_by_year[i,]$n, total_species_by_year[i,]$year))
+  cat(sprintf("\n \t %g species in %g", total_species_by_year[i,]$n, total_species_by_year[i,]$year))
 }
 ```
 
