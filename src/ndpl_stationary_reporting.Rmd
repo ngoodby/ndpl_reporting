@@ -319,8 +319,26 @@ species_reference_table %>% dplyr::filter(species_code_6 %in% spp_list$name) %>%
 ***
 
 # __Results__
+```{r}
+total_species_this_year <- dat_count %>% dplyr::filter(year == this_year, pres_abs == TRUE) %>%
+  group_by(year) %>% .$species_scientific %>% unique()
+
+
+test <- c("Eptesicus fuscus")
+
+total_species_this_year %in% test
+
+if (condition){
+  do some stuff
+} else if (condition 2) {
+  do some other stuff
+} else {
+  if none of the above conditions are met, do this. 
+}
+```
 
 ```{r}
+
 total_species_this_year <- dat_count %>% dplyr::filter(year == this_year, pres_abs == TRUE) %>%
   group_by(year) %>% summarise(n = n_distinct(species)) %>% dplyr::pull(n)
 
@@ -489,7 +507,7 @@ survey_dates %>% flextable() %>%
 
 ```{r}
 # name files "speciesCode_locationName.png" (e.g. "ANPA_Water Tank.png")
-sgram_list <- list.files(here::here("report_specific_sonograms"), full.names = F) %>% str_split(pattern = "_|\\.", simplify=T) %>%
+sgram_list <- list.files(here::here("report_specific_sonograms"), full.names = F) %>% str_split(pattern = "_|\\.", n=3, simplify=T) %>%
   data.frame() %>% dplyr::select(-X3) 
 names(sgram_list) <- c("species", "location_name")
 sgram_paths <- list.files(here::here("report_specific_sonograms"), full.names = T) %>% data.frame()
