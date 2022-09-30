@@ -57,7 +57,7 @@ knitr::opts_chunk$set(echo = FALSE,
 
 username = 'clong@batcon.org'
 password = 'Myotisciliolabrum@9721'
-report_grts = c(106,2858)
+report_grts = c(106, 2858)
 project_id = 353
 report_locations = ""
 forest_id <- "BishopBLM_20220831"
@@ -309,10 +309,10 @@ species_reference_table %>% dplyr::filter(species_code_6 %in% spp_list$name) %>%
     is.na(species_url) ~ species_scientific,
     !is.na(species_url) ~ sprintf("![*%s*](%s)", species_scientific, species_url)
   )) %>% 
-  dplyr::select(species_scientific, common_name, freq_range) %>% 
+  dplyr::select(species_scientific, common_name, freq_range) %>%
   rename("Scientific Name" = species_scientific, 
          "Common Name" = common_name,
-         "Characteristic Frequency Range" = freq_range) %>% 
+         "Characteristic Frequency Range" = freq_range) %>%
   kable()
 ```
 
@@ -507,12 +507,14 @@ survey_dates %>% flextable() %>%
 
 ```{r}
 # name files "speciesCode_locationName.png" (e.g. "ANPA_Water Tank.png")
-sgram_list <- list.files(here::here("report_specific_sonograms"), full.names = F) %>% str_split(pattern = "_|\\.", n=3, simplify=T) %>%
-  data.frame() %>% dplyr::select(-X3) 
+sgram_list <- list.files(here::here("report_specific_sonograms"), full.names = F) %>%
+  str_split(pattern = "_", n=2, simplify=T) %>% as_tibble() %>% 
+  mutate(site_name = str_split(V2, pattern = "\\.", simplify = T)[,1]) %>% 
+  dplyr::select(-V2) 
 names(sgram_list) <- c("species", "location_name")
-sgram_paths <- list.files(here::here("report_specific_sonograms"), full.names = T) %>% data.frame()
+sgram_paths <- list.files(here::here("report_specific_sonograms"), full.names = T) %>% data.frame() 
 names(sgram_paths) <- "path"
-sonograms <- bind_cols(sgram_list, sgram_paths) %>% left_join(species_reference_table, by = c("species" = "species_code"))
+sonograms <- bind_cols(sgram_list, sgram_paths) %>% left_join(species_reference_table, by = c("species" = "species_code")) 
 ```
 
 ```{r, results='asis', eval=TRUE}
