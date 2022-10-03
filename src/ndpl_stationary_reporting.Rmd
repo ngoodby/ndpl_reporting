@@ -324,22 +324,29 @@ species_reference_table %>% dplyr::filter(species_code_6 %in% spp_list$name) %>%
 ***
 
 # __Results__
-```{r}
+```{r results="asis"}
+
 total_species_this_year <- dat_count %>% dplyr::filter(year == this_year, pres_abs == TRUE) %>%
   group_by(year) %>% .$species_scientific %>% unique()
 
+total_species_prev_year <- dat_count %>% dplyr::filter(year == 2020, pres_abs == TRUE) %>%
+  group_by(year) %>% .$species_scientific %>% unique()
 
-test <- c("Eptesicus fuscus")
+#spp confirmed 1st time this year
+sppcon <- setdiff(total_species_this_year, total_species_prev_year)
 
-total_species_this_year %in% test
 
-if (condition){
-  do some stuff
-} else if (condition 2) {
-  do some other stuff
+#spp only confirmed in previous years
+sppcon2 <- setdiff(total_species_prev_year, total_species_this_year)
+
+
+
+if(length(sppcon) > 0){
+  cat(paste(sppcon, collapse= ', '), "were first confirmed this year")
 } else {
-  if none of the above conditions are met, do this. 
+  print('No new species were detected this year.')
 }
+
 ```
 
 ```{r}
