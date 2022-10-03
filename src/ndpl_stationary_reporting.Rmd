@@ -286,7 +286,7 @@ for (i in seq(1, length(grts_long_photo_paths))){
 
 # __Potential Species__
 
-Species that may occur in surveyed area of the `r partner` and the specific and general categories in which they are included.
+Species that may occur in surveyed area of the `r partner` and the specific and general categories in which they are included. Species of Greatest Conservation Need (SGCN), as designated by the State's Wildlife Action Plan, are bolded.
 
 
 ```{r species frequency table}
