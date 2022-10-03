@@ -439,8 +439,35 @@ species_count %>%
   set_caption("Presence (X) or not detected (blank cell) of bat species recorded at stationary sites every year.")
 ```
 
-```{r}
-#Christen makes mobile results
+```{r mobile results}
+
+filtered_mobile_all_dat <- mobile_all_dat %>% 
+  # dplyr::filter(year == this_year) %>% 
+  separate(survey_start_time, c('start_night', 'start_time'), sep='T') %>% 
+  # dplyr::filter(!species_code %in% exclude) %>%
+  separate_rows(species_code)
+
+
+mobile_table_this_year <- filtered_mobile_all_dat %>% 
+  group_by(site_name, start_night, species_code) %>% 
+  summarise(num_confirmed_files = n()) %>% 
+  arrange(., species_code) %>% 
+  pivot_wider(names_from = species_code, 
+              values_from = num_confirmed_files,
+              values_fill = ) %>% 
+  arrange(., site_name, start_night) %>% 
+  # mutate(grts_cell_id = as.character(grts_cell_id)) %>% 
+  rename("Location Name"=site_name, "Monitoring Night"=start_night)
+     
+mobile_table_this_year %>%
+  flextable(col_keys = names(.)) %>% 
+  merge_v(., j="Location Name") %>% 
+  theme_box() %>%
+  bg(., bg = "light blue", part = "header") %>% 
+  flextable::align(., align = "center", part = "all") %>%
+  bold(., j = 1, bold = TRUE) %>% 
+  set_table_properties(., width = 1, layout = "autofit") %>% 
+set_caption(paste("Species of bat, group and total number of files containing bat echolocation files recorded on mobile transects ."))
 ```
 
 ***
