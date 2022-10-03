@@ -80,17 +80,6 @@ if (paste0(partner, ".png") %in% logos){
 }
 ```
 
-```{r shiny parameters}
-# report_grts <- params$grts %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both")) %>% as.numeric()
-# report_locations <- params$locations %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both"))
-# username = params$username
-# password = params$password
-# project_id = params$project %>% str_split(., ",", simplify = TRUE) %>% str_trim(., side = c("both")) %>% as.numeric()
-# partner = params$agency
-# table_path = params$table_path
-# forest_id <- params$forest_id
-```
-
 ```{r NABat API, results = 'hide'}
 source(here::here("src", "load_nabat_data_function.R"))
 data <- load_nabat_data(username, password, project_id, report_grts, report_locations, exclude)
@@ -295,12 +284,17 @@ for (i in seq(1, length(grts_long_photo_paths))){
 }
 ```
 
-
 # __Potential Species__
 
 Species that may occur in surveyed area of the `r partner` and the specific and general categories in which they are included.
 
+
 ```{r species frequency table}
+#bring in data on which species are SGCN in the state specified by the K-Pro region
+sgcn <- read_csv(here::here('data', 'sgcn_final_data.csv')) %>% dplyr::select(-1) %>% 
+  dplyr::filter(states_2015 == kpro_region) %>% 
+  dplyr::select(where(~any(. == 1))) %>% names()
+
 #get list of available sonogram images in the "sonograms" folder
 available_sgrams <- list.files(here::here("sonograms"), full.names = F) %>% str_split(pattern = "_", simplify=T) %>% .[,1]
 
@@ -308,16 +302,17 @@ available_sgrams <- list.files(here::here("sonograms"), full.names = F) %>% str_
 species_reference_table %>% dplyr::filter(species_code_6 %in% spp_list$name) %>% 
   mutate(freq_range = case_when(
     species_code %in% available_sgrams ~ sprintf("![%s](../sonograms/%s.png)", freq_range, species_code),
-    !species_code %in% available_sgrams ~freq_range
+    !species_code %in% available_sgrams ~ freq_range
   )) %>% 
   mutate(species_scientific = case_when(
     is.na(species_url) ~ species_scientific,
-    !is.na(species_url) ~ sprintf("![*%s*](%s)", species_scientific, species_url)
+    !is.na(species_url) & (!species_scientific %in% sgcn) ~ sprintf("![*%s*](%s)", species_scientific, species_url),
+    !is.na(species_url) & (species_scientific %in% sgcn) ~ sprintf("![***%s***](%s)", species_scientific, species_url)
   )) %>% 
-  dplyr::select(species_scientific, common_name, freq_range) %>%
+  dplyr::select(species_scientific, species_scientific, common_name, freq_range) %>%
   rename("Scientific Name" = species_scientific, 
          "Common Name" = common_name,
-         "Characteristic Frequency Range" = freq_range) %>%
+         "Characteristic Frequency Range (kHz)" = freq_range) %>%
   kable()
 ```
 
