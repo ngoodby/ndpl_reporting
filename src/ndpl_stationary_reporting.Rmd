@@ -62,6 +62,11 @@ project_id = 353
 report_locations = ""
 forest_id <- "BishopBLM_20220831"
 partner <- "USFS"
+
+exclude <- c("LACITABR", "LANOTABR","LABLPAHE", "LABOPESU", "EUMAEUPE","EUMAIDPH", "MYCAMYYU", "MYEVMYTH",
+             "MYLUMYVO", "EPFULANO", "Q10k", "Q15k", "Q20k", "Q25k", "Q40k", "40kMyo", "40k", "Q50k", 
+             "LACITABR,HiF", "Q25k,MYCAMYYU", "Q25k,HiF", "Q40k,Q25k", "Q40k,LoF", "MY40", "Social", "25K", 
+             "25k", "NOISE", "LowF", "HighF", "NoID", "LoF", "HiF", "Noise", "MYSP")
 ```
 
 ![](../images/BCI_logo.png){height=100}
@@ -88,7 +93,7 @@ if (paste0(partner, ".png") %in% logos){
 
 ```{r NABat API, results = 'hide'}
 source(here::here("src", "load_nabat_data_function.R"))
-data <- load_nabat_data(username, password, project_id, report_grts, report_locations)
+data <- load_nabat_data(username, password, project_id, report_grts, report_locations, exclude)
 all_dat <- data[[1]]
 dat_count <- data[[2]]
 sa_survey_df <- data[[3]]
@@ -372,9 +377,6 @@ for (i in seq(1:nrow(total_species_by_year))){
 ## Bat species confirmed in `r this_year`
 
 ```{r speciesthisyear}
-
-exclude <- c("NOISE", NA, "25k","40k", "HighF", "LABLPAHE", "MYCAMYYU", "LowF", "MYSP")
-
 filtered_all_dat <- all_dat %>% 
   dplyr::filter(year == this_year) %>% 
   dplyr::filter(!species_code %in% exclude) %>%
@@ -503,7 +505,7 @@ survey_dates %>% flextable() %>%
 ```
 
 ***
-<!-- # __Example Sonograms__ -->
+# __Example Sonograms__
 
 ```{r}
 # name files "speciesCode_locationName.png" (e.g. "ANPA_Water Tank.png")

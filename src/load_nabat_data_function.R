@@ -1,13 +1,9 @@
-load_nabat_data <- function(username, password, project_id, report_grts, report_locations){
-  #' @title Load NABat Data
+load_nabat_data <- function(username, password, project_id, report_grts, report_locations, exclude){
+  #' @title Load stationary acoustic NABat Data
   #'
-  #' @description Load and clean data
+  #' @description Load and clean stationary acoustic NABat survey data
   #' 
   
-  exclude <- c("LACITABR", "LANOTABR","LABLPAHE", "LABOPESU", "EUMAEUPE","EUMAIDPH", "MYCAMYYU", "MYEVMYTH",
-               "MYLUMYVO", "EPFULANO", "Q10k", "Q15k", "Q20k", "Q25k", "Q40k", "40kMyo", "40k", "Q50k", 
-               "LACITABR,HiF", "Q25k,MYCAMYYU", "Q25k,HiF", "Q40k,Q25k", "Q40k,LoF", "MY40", "Social", "25K", 
-               "25k", "NOISE", "LowF", "HighF", "NoID", "LoF", "HiF", "Noise", "MYSP")
   token = get_nabat_gql_token(username, password)
   token = get_refresh_token(token)
   project_df = get_projects(token)
@@ -44,8 +40,8 @@ load_nabat_data <- function(username, password, project_id, report_grts, report_
   }
   sa_proj_dates = unique(all_dat$year)
   this_year = max(sa_proj_dates)
-  dat_count <- all_dat %>% 
-    dplyr::filter(!species_code %in% exclude) %>% #filtering on dat_count instead of all_dat allows for a count of calls later on and preserves couplets
+  dat_count <- all_dat %>% #filtering on dat_count instead of all_dat allows for a count of calls later on and preserves couplets
+    dplyr::filter(!species_code %in% exclude) %>% 
     dplyr::filter(nchar(species_code) == 4) %>% 
     dplyr::filter(!is.na(manual_id)) %>%
     separate_rows(species_code) %>% 

@@ -54,7 +54,6 @@ knitr::opts_chunk$set(echo = FALSE,
 ```
 
 ```{r Inputs}
-
 username = 'clong@batcon.org'
 password = 'Myotisciliolabrum@9721'
 report_grts = c(106,2858)
@@ -62,6 +61,11 @@ project_id = 353
 report_locations = ""
 forest_id <- "BishopBLM_20220831"
 partner <- "USFS"
+
+exclude <- c("LACITABR", "LANOTABR","LABLPAHE", "LABOPESU", "EUMAEUPE","EUMAIDPH", "MYCAMYYU", "MYEVMYTH",
+             "MYLUMYVO", "EPFULANO", "Q10k", "Q15k", "Q20k", "Q25k", "Q40k", "40kMyo", "40k", "Q50k", 
+             "LACITABR,HiF", "Q25k,MYCAMYYU", "Q25k,HiF", "Q40k,Q25k", "Q40k,LoF", "MY40", "Social", "25K", 
+             "25k", "NOISE", "LowF", "HighF", "NoID", "LoF", "HiF", "Noise", "MYSP")
 ```
 
 ![](../images/BCI_logo.png){height=100}
@@ -87,12 +91,21 @@ if (paste0(partner, ".png") %in% logos){
 ```
 
 ```{r NABat API, results = 'hide'}
+#stationary
 source(here::here("src", "load_nabat_data_function.R"))
-data <- load_nabat_data(username, password, project_id, report_grts, report_locations)
+data <- load_nabat_data(username, password, project_id, report_grts, report_locations, exclude)
 all_dat <- data[[1]]
 dat_count <- data[[2]]
 sa_survey_df <- data[[3]]
 this_year = max(all_dat$year)
+
+#mobile
+source(here::here('src', 'get_mobile_acoustic_data_function.R'))
+mobile_data <- load_mobile_data(username, password, project_id, report_grts, exclude)
+mobile_all_dat <- mobile_data[[1]]
+mobile_dat_count <- mobile_data[[2]]
+ma_survey_df <- mobile_data[[3]]
+mobile_this_year = max(mobile_all_dat$year)
 ```
 
 ```{r}
@@ -173,7 +186,7 @@ if (all(is.na(added_species)) & all(is.na(subtracted_species))){
 
 Sonobat 4.4 was then used to manually identify files.
 
-We attempted to confirm the identification of a maximum of three files per species, per night, per site by visually inspecting the species ID proposed by Sonobat 4.4. Up to 10 files per species-site-night were reviewed in an attempt to confirm the species ID of 3 files. Review options included:
+For stationary data, we attempted to confirm the identification of a maximum of three files per species, per night, per site by visually inspecting the species ID proposed by Sonobat 4.4. Up to 10 files per species-site-night were reviewed in an attempt to confirm the species ID of 3 files. Review options included:
 
 1. Confirming species as assigned by the programs; 
 
@@ -185,9 +198,11 @@ We attempted to confirm the identification of a maximum of three files per speci
 
 We reviewed files in order of confidence in identification as expressed by the program. A confirmed identification of a species in one or more files on a given night at a given site resulted in a designation of species presence for that site-night. Identification of up to three files added an additional measure of confidence to species presence designations. When we could not assign any files recorded on a site-night to species, that species was considered “not detected.”
 
+For the mobile transects, every file not scrubbed out as Noise was manually viewed in Sonobat. 
+
 ***
 
-# __Map of Survey Locations__
+# __Map of Stationary Survey Locations__
 
 This map shows the survey locations included in this report and the NABat cell(s) that they fall within. Hover your cursor over the map to see the NABat GRTS cell number(s) and survey location name(s).
 
@@ -208,6 +223,13 @@ map[[1]]
 ```
 
 ***
+
+# __Map of Mobile Transects__
+
+```{r}
+
+```
+
 
 # __Site Photos__
 
@@ -354,9 +376,6 @@ for (i in seq(1:nrow(total_species_by_year))){
 ## Bat species confirmed in `r this_year`
 
 ```{r speciesthisyear}
-
-exclude <- c("NOISE", NA, "25k","40k", "HighF", "LABLPAHE", "MYCAMYYU", "LowF", "MYSP")
-
 filtered_all_dat <- all_dat %>% 
   dplyr::filter(year == this_year) %>% 
   dplyr::filter(!species_code %in% exclude) %>%
