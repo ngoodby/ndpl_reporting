@@ -66,6 +66,8 @@ exclude <- c("LACITABR", "LANOTABR","LABLPAHE", "LABOPESU", "EUMAEUPE","EUMAIDPH
              "MYLUMYVO", "EPFULANO", "Q10k", "Q15k", "Q20k", "Q25k", "Q40k", "40kMyo", "40k", "Q50k", 
              "LACITABR,HiF", "Q25k,MYCAMYYU", "Q25k,HiF", "Q40k,Q25k", "Q40k,LoF", "MY40", "Social", "25K", 
              "25k", "NOISE", "LowF", "HighF", "NoID", "LoF", "HiF", "Noise", "MYSP")
+
+mobile_exclude <- c("Noise", "NOISE", NA)
 ```
 
 ![](../images/BCI_logo.png){height=100}
@@ -121,6 +123,16 @@ all_dat <- all_dat %>% left_join(species_reference_table,
   left_join(detector_codes, by = c("detector_type_id"="id")) %>% 
   left_join(mic_codes, by = c("microphone_type_id"="id"))
 current_year <- as.character(this_year)
+
+
+filtered_mobile_all_dat <- mobile_all_dat %>% 
+  # left_join(species_reference_table, 
+  #   by = c("species_code" = "species_code", 
+  #  "species_code_6"="species_code_6"),
+  # mutate("common_name" = common_name.y) %>% dplyr::select(-common_name.x, -common_name.y) %>% 
+  left_join(detector_codes, by = c("detector_type_id"="id")) %>% 
+  left_join(mic_codes, by = c("microphone_type_id"="id"))
+
 ```
 
 ***
@@ -444,7 +456,8 @@ species_count %>%
 filtered_mobile_all_dat <- mobile_all_dat %>% 
   # dplyr::filter(year == this_year) %>% 
   separate(survey_start_time, c('start_night', 'start_time'), sep='T') %>% 
-  # dplyr::filter(!species_code %in% exclude) %>%
+    separate(survey_end_time, c('end_night', 'end_time'), sep='T') %>% 
+  dplyr::filter(!species_code %in% mobile_exclude) %>%
   separate_rows(species_code)
 
 
@@ -467,7 +480,7 @@ mobile_table_this_year %>%
   flextable::align(., align = "center", part = "all") %>%
   bold(., j = 1, bold = TRUE) %>% 
   set_table_properties(., width = 1, layout = "autofit") %>% 
-set_caption(paste("Species of bat, group and total number of files containing bat echolocation files recorded on mobile transects ."))
+set_caption(paste("Species of bat, group and total number of files containing bat echolocation files recorded on mobile transects."))
 ```
 
 ***
@@ -504,8 +517,34 @@ metadata %>% flextable() %>%
 
 ```
 
-```{r}
+```{r mobile_meta}
 #Christen makes mobile metadata
+
+mobile_metadata <- mobile_all_dat %>% 
+  dplyr::filter(year == this_year) %>% 
+   dplyr::group_by(site_name, detector_model, detector_serial_number, mic_type) %>% 
+   dplyr::summarise(start = first(survey_start_time), end = first(survey_end_time)) 
+ # mutate(grts_cell_id = as.character(grts_cell_id))
+    
+
+mobile_metadata %>% flextable() %>% 
+  merge_v(j = "site_name") %>% 
+  set_header_labels(.,
+                    site_name = "Location Name",
+                    survey_start_time = "Survey Start Time",
+                    survey_end_time = "Survey End Time",
+                    detector_model = "Detector Type",
+                    detector_serial_number = "Detector Serial #",
+                    mic_type = "Microphone Type") %>% 
+  theme_box() %>% 
+  bg(., bg = "light grey", part = "header") %>% 
+  bold(., j = 1, bold = TRUE) %>%
+  flextable::align(., align = "center", part = "all") %>% 
+
+  set_table_properties(., layout = "autofit") %>% 
+  set_caption(paste("Metadata for the mobile transects  surveyed in", this_year)) %>% 
+  colformat_char(na_str = "-")
+
 ```
 
 ***
