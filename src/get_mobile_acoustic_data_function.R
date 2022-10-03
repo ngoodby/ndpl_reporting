@@ -1,7 +1,9 @@
-load_mobile_data <-  function(username, password, project_id, report_grts, exclude){
+load_mobile_data <-  function(username, password, project_id, report_grts){
   #' @title Load mobile NABat data
   #'
   #' @description Load and clean mobile acoustic NABat survey data.
+  
+  exclude = c('NOISE', 'NoID', 'Noise')
   
   token = get_nabat_gql_token(username, password)
   token = get_refresh_token(token)

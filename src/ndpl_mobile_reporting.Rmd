@@ -56,8 +56,8 @@ knitr::opts_chunk$set(echo = FALSE,
 ```{r Inputs}
 username = 'clong@batcon.org'
 password = 'Myotisciliolabrum@9721'
-report_grts = c(106,2858)
-project_id = 353
+report_grts = c("")
+project_id = 911
 report_locations = ""
 forest_id <- "BishopBLM_20220831"
 partner <- "USFS"
@@ -101,7 +101,7 @@ this_year = max(all_dat$year)
 
 #mobile
 source(here::here('src', 'get_mobile_acoustic_data_function.R'))
-mobile_data <- load_mobile_data(username, password, project_id, report_grts, exclude)
+mobile_data <- load_mobile_data(username, password, project_id, report_grts)
 mobile_all_dat <- mobile_data[[1]]
 mobile_dat_count <- mobile_data[[2]]
 ma_survey_df <- mobile_data[[3]]
@@ -229,7 +229,6 @@ map[[1]]
 ```{r}
 
 ```
-
 
 # __Site Photos__
 
@@ -440,6 +439,10 @@ species_count %>%
   set_caption("Presence (X) or not detected (blank cell) of bat species recorded at stationary sites every year.")
 ```
 
+```{r}
+#Christen makes mobile results
+```
+
 ***
 
 # __Metadata__
@@ -472,6 +475,10 @@ metadata %>% flextable() %>%
   set_caption(paste("Metadata for the GRTS cells surveyed in", this_year)) %>% 
   colformat_char(na_str = "-")
 
+```
+
+```{r}
+#Christen makes mobile metadata
 ```
 
 ***
