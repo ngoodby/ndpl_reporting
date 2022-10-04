@@ -33,18 +33,17 @@ load_nabat_data <- function(username, password, project_id, report_grts, report_
   all_dat$survey_event_id <- as.numeric(all_dat$survey_event_id)
   sa_survey_df$survey_event_id <- as.numeric(sa_survey_df$survey_event_id)
   all_dat <- left_join(all_dat, sa_survey_df, keep=F) %>% 
-    mutate(year = lubridate::year(recording_night))
+    mutate(year = lubridate::year(recording_night)) %>% 
+    dplyr::filter(!species_code %in% exclude) %>% 
+    dplyr::filter(nchar(species_code) == 4) %>% 
+    separate_rows(species_code)
+  
   if (report_locations[1] != ""){
     all_dat <- all_dat %>% 
       dplyr::filter(location_name %in% report_locations)
   }
-  sa_proj_dates = unique(all_dat$year)
-  this_year = max(sa_proj_dates)
   dat_count <- all_dat %>% #filtering on dat_count instead of all_dat allows for a count of calls later on and preserves couplets
-    dplyr::filter(!species_code %in% exclude) %>% 
-    dplyr::filter(nchar(species_code) == 4) %>% 
     dplyr::filter(!is.na(manual_id)) %>%
-    separate_rows(species_code) %>% 
     dplyr::group_by(year, grts_cell_id, location_name, species_code) %>%
     dplyr::summarise(n = n()) %>%
     pivot_wider(names_from = species_code, values_from = n) %>% 

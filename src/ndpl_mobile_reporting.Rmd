@@ -59,7 +59,7 @@ username = 'clong@batcon.org'
 password = 'Myotisciliolabrum@9721'
 report_grts = c("")
 project_id = 911
-report_locations = ""
+report_locations = c("")
 forest_id <- "BishopBLM_20220831"
 partner <- "USFS"
 
@@ -114,7 +114,6 @@ current_year <- as.character(this_year)
 mobile_all_dat <- mobile_all_dat %>% 
   left_join(detector_codes, by = c("detector_type_id"="id")) %>% 
   left_join(mic_codes, by = c("microphone_type_id"="id"))
-
 ```
 
 ***
@@ -299,15 +298,17 @@ for (i in seq(1, nrow(photo_queries))){
 unlink(here::here("site_photos"), recursive = T)
 
 # create folders for each survey site and put the relevant photos into them
-for (i in seq(1, length(pics))){
+if (length(pics[[1]])!=0){
+  for (i in seq(1, length(pics))){
   grts <- sa_survey_df[i,]$grts_cell_id
   loc <- sa_survey_df[i,]$event
   dir.create(here::here("site_photos", grts, loc), recursive=T)
-  for (pic in seq(1, length(pics[[i]]))){
-    photo <- pics[[i]][pic]
-    path <- here::here("site_photos", grts, loc, paste0(pic, ".jpg"))
-    photo <- image_scale(photo, "350x350!")
-    image_write(photo, path)
+    for (pic in seq(1, length(pics[[i]]))){
+      photo <- pics[[i]][pic]
+      path <- here::here("site_photos", grts, loc, paste0(pic, ".jpg"))
+      photo <- image_scale(photo, "350x350!")
+      image_write(photo, path)
+    }
   }
 }
 
@@ -348,20 +349,24 @@ for (i in seq(1, length(report_grts))){
 
 ```{r, results='asis', eval=TRUE}
 # print photos under expandable GRTS cell labels
-for (i in seq(1, length(grts_long_photo_paths))){
-  cat("<details>\n")
-  cat(sprintf("<summary>Click to View Site Photos for GRTS %s</summary>\n", report_grts[i]))
-  for(j in seq(1, length(grts_long_photo_paths[[i]]))){
-    cat(sprintf('![%s](%s)\n', captions[[i]][j], grts_long_photo_paths[[i]][j]), sep = '\n')
+if (length(cells[[1]])==0){
+  cat("No photos are available for the survey locations in this report.")
+  } else {
+  for (i in seq(1, length(grts_long_photo_paths))){
+    cat("<details>\n")
+    cat(sprintf("<summary>Click to View Site Photos for GRTS %s</summary>\n", report_grts[i]))
+    for(j in seq(1, length(grts_long_photo_paths[[i]]))){
+      cat(sprintf('![%s](%s)\n', captions[[i]][j], grts_long_photo_paths[[i]][j]), sep = '\n')
+    }
+    cat("</details>\n\n")
   }
-  cat("</details>\n\n")
 }
 ```
 
 
 # __Potential Species__
 
-Species that may occur in surveyed area of the `r partner` and the specific and general categories in which they are included.
+Species that may occur in surveyed area of the `r partner` and the specific and general categories in which they are included. Species of Greatest Conservation Need (SGCN), as designated by the State's Wildlife Action Plan, are bolded.
 
 ```{r species frequency table}
 #bring in data on which species are SGCN in the state specified by the K-Pro region
@@ -394,6 +399,26 @@ species_reference_table %>% dplyr::filter(species_code_6 %in% spp_list$name) %>%
 
 # __Results__
 
+```{r results="asis"}
+total_species_this_year <- dat_count %>% dplyr::filter(year == this_year, pres_abs == TRUE) %>%
+  group_by(year) %>% .$species_scientific %>% unique()
+
+total_species_prev_year <- dat_count %>% dplyr::filter(year == 2020, pres_abs == TRUE) %>%
+  group_by(year) %>% .$species_scientific %>% unique()
+
+#spp confirmed 1st time this year
+sppcon <- setdiff(total_species_this_year, total_species_prev_year)
+
+#spp only confirmed in previous years
+sppcon2 <- setdiff(total_species_prev_year, total_species_this_year)
+
+if(length(sppcon) > 0){
+  cat(paste(sppcon, collapse= ', '), "were first confirmed this year")
+} else {
+  print('No new species were detected this year.')
+}
+```
+
 ```{r}
 total_species_this_year <- dat_count %>% dplyr::filter(year == this_year, pres_abs == TRUE) %>%
   group_by(year) %>% summarise(n = n_distinct(species)) %>% dplyr::pull(n)
@@ -411,29 +436,24 @@ total_species_by_year <- dat_count %>% dplyr::filter(pres_abs == TRUE) %>%
 
 ```
 
-In `r this_year`, we confirmed the presence of `r total_species_this_year` bat species (see Table \@ref(tab:speciesthisyear)):
-```{r}
+***In `r this_year`, we confirmed the presence of `r total_species_this_year` bat species (see Table \@ref(tab:speciesthisyear)):***
+```{r results='asis'}
 for (i in seq(1:length(report_grts))){
-  cat(sprintf("%g species in GRTS %g \n", total_species_by_grts_this_year[i,]$n, total_species_by_grts_this_year[i,]$grts_cell_id))
+  cat(sprintf("\n \t %g species in GRTS %g", total_species_by_grts_this_year[i,]$n, total_species_by_grts_this_year[i,]$grts_cell_id))
 }
 ```
 
-Over all years of monitoring, we confirmed `r total_species_all_years` bat species (see Table \@ref(tab:speciesallyears)):
-```{r}
+***Over all years of monitoring, we confirmed `r total_species_all_years` bat species (see Table \@ref(tab:speciesallyears)):***
+```{r results='asis'}
 for (i in seq(1:nrow(total_species_by_year))){
-  cat(sprintf("%g species in %g \n", total_species_by_year[i,]$n, total_species_by_year[i,]$year))
+  cat(sprintf("\n \t %g species in %g", total_species_by_year[i,]$n, total_species_by_year[i,]$year))
 }
 ```
 
 ## Bat species confirmed in `r this_year`
 
 ```{r speciesthisyear}
-filtered_all_dat <- all_dat %>% 
-  dplyr::filter(year == this_year) %>% 
-  dplyr::filter(!species_code %in% exclude) %>%
-  separate_rows(species_code)
-
-species_table_this_year <- filtered_all_dat %>% 
+species_table_this_year <- all_dat %>% 
   group_by(grts_cell_id, location_name, recording_night, species_code) %>% 
   summarise(num_confirmed_files = n()) %>% 
   arrange(., species_code) %>% 
@@ -493,7 +513,6 @@ species_count %>%
 ```
 
 ```{r mobile results}
-
 filtered_mobile_all_dat <- mobile_all_dat %>% 
   separate(survey_start_time, c('start_night', 'start_time'), sep='T') %>% 
   separate(survey_end_time, c('end_night', 'end_time'), sep='T') %>% 
@@ -524,17 +543,15 @@ set_caption(paste("Species of bat, group and total number of files containing ba
 
 # __Metadata__
 
-## GRTS cell Metadata
+## Stationary Acoustic Survey Metadata
 
 ```{r sitemeta}
-
 metadata <- all_dat %>% 
   dplyr::filter(year == this_year) %>% 
   dplyr::group_by(grts_cell_id, location_name, detector_model, detector_serial_number, mic_type) %>% 
  dplyr::summarise(Latitude = mean(latitude), Longitude = mean(longitude)) %>% 
  mutate(grts_cell_id = as.character(grts_cell_id))
     
-
 metadata %>% flextable() %>% 
   merge_v(j = "grts_cell_id") %>% 
   set_header_labels(.,
@@ -549,10 +566,12 @@ metadata %>% flextable() %>%
   flextable::align(., align = "center", part = "all") %>% 
 
   set_table_properties(., layout = "autofit") %>% 
-  set_caption(paste("Metadata for the GRTS cells surveyed in", this_year)) %>% 
+  set_caption(paste("Metadata for the stationary acoustic surveys in", this_year)) %>% 
   colformat_char(na_str = "-")
 
 ```
+
+## Mobile Acoustic Survey Metadata
 
 ```{r mobile_meta}
 mobile_metadata <- mobile_all_dat %>% 
@@ -575,12 +594,11 @@ mobile_metadata %>% flextable() %>%
   set_table_properties(., layout = "autofit") %>% 
   set_caption(paste("Metadata for the mobile transects  surveyed in", this_year)) %>% 
   colformat_char(na_str = "-")
-
 ```
 
 ***
 
-## Survey Date Metadata
+## Stationary Survey Datess
 
 ```{r surveydates}
 survey_dates <- all_dat %>% 
@@ -590,7 +608,9 @@ survey_dates <- all_dat %>%
   arrange(., grts_cell_id, location_name, year) %>% 
   mutate(month = lubridate::month(start_date, label=T, abbr=F), day = lubridate::day(start_date)) %>% 
   unite('start', month:day, remove = T, sep = " ") %>% 
-  pivot_wider(id_cols = c(grts_cell_id, location_name), names_from = year, values_from = start, values_fill = "-")
+  pivot_wider(id_cols = c(grts_cell_id, location_name), names_from = year, values_from = start, values_fill = "-") %>% 
+  mutate(grts_cell_id = as.character(grts_cell_id))
+  
 
 survey_dates %>% flextable() %>% 
   merge_v(j = "grts_cell_id") %>% 
@@ -601,9 +621,7 @@ survey_dates %>% flextable() %>%
   bg(., bg = "grey", part = "header") %>% 
   flextable::align(., align = "center", part = "all") %>% 
   set_table_properties(., layout = "autofit") %>% 
-
   set_caption("Survey start dates for each year for each detector location.")
-
 ```
 
 ***

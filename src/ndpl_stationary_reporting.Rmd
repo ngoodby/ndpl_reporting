@@ -225,15 +225,17 @@ for (i in seq(1, nrow(photo_queries))){
 unlink(here::here("site_photos"), recursive = T)
 
 # create folders for each survey site and put the relevant photos into them
-for (i in seq(1, length(pics))){
+if (length(pics[[1]])!=0){
+  for (i in seq(1, length(pics))){
   grts <- sa_survey_df[i,]$grts_cell_id
   loc <- sa_survey_df[i,]$event
   dir.create(here::here("site_photos", grts, loc), recursive=T)
-  for (pic in seq(1, length(pics[[i]]))){
-    photo <- pics[[i]][pic]
-    path <- here::here("site_photos", grts, loc, paste0(pic, ".jpg"))
-    photo <- image_scale(photo, "350x350!")
-    image_write(photo, path)
+    for (pic in seq(1, length(pics[[i]]))){
+      photo <- pics[[i]][pic]
+      path <- here::here("site_photos", grts, loc, paste0(pic, ".jpg"))
+      photo <- image_scale(photo, "350x350!")
+      image_write(photo, path)
+    }
   }
 }
 
@@ -274,13 +276,17 @@ for (i in seq(1, length(report_grts))){
 
 ```{r, results='asis', eval=TRUE}
 # print photos under expandable GRTS cell labels
-for (i in seq(1, length(grts_long_photo_paths))){
-  cat("<details>\n")
-  cat(sprintf("<summary>Click to View Site Photos for GRTS %s</summary>\n", report_grts[i]))
-  for(j in seq(1, length(grts_long_photo_paths[[i]]))){
-    cat(sprintf('![%s](%s)\n', captions[[i]][j], grts_long_photo_paths[[i]][j]), sep = '\n')
+if (length(cells[[1]])==0){
+  cat("No photos are available for the survey locations in this report.")
+  } else {
+  for (i in seq(1, length(grts_long_photo_paths))){
+    cat("<details>\n")
+    cat(sprintf("<summary>Click to View Site Photos for GRTS %s</summary>\n", report_grts[i]))
+    for(j in seq(1, length(grts_long_photo_paths[[i]]))){
+      cat(sprintf('![%s](%s)\n', captions[[i]][j], grts_long_photo_paths[[i]][j]), sep = '\n')
+    }
+    cat("</details>\n\n")
   }
-  cat("</details>\n\n")
 }
 ```
 
@@ -320,7 +326,6 @@ species_reference_table %>% dplyr::filter(species_code_6 %in% spp_list$name) %>%
 
 # __Results__
 ```{r results="asis"}
-
 total_species_this_year <- dat_count %>% dplyr::filter(year == this_year, pres_abs == TRUE) %>%
   group_by(year) %>% .$species_scientific %>% unique()
 
@@ -330,22 +335,17 @@ total_species_prev_year <- dat_count %>% dplyr::filter(year == 2020, pres_abs ==
 #spp confirmed 1st time this year
 sppcon <- setdiff(total_species_this_year, total_species_prev_year)
 
-
 #spp only confirmed in previous years
 sppcon2 <- setdiff(total_species_prev_year, total_species_this_year)
-
-
 
 if(length(sppcon) > 0){
   cat(paste(sppcon, collapse= ', '), "were first confirmed this year")
 } else {
   print('No new species were detected this year.')
 }
-
 ```
 
 ```{r}
-
 total_species_this_year <- dat_count %>% dplyr::filter(year == this_year, pres_abs == TRUE) %>%
   group_by(year) %>% summarise(n = n_distinct(species)) %>% dplyr::pull(n)
 
@@ -359,7 +359,6 @@ total_species_by_grts_this_year <- dat_count %>% dplyr::filter(year == this_year
 
 total_species_by_year <- dat_count %>% dplyr::filter(pres_abs == TRUE) %>%
   group_by(year) %>% summarise(n = n_distinct(species))
-
 ```
 
 ***In `r this_year`, we confirmed the presence of `r total_species_this_year` bat species (see Table \@ref(tab:speciesthisyear)):***
@@ -379,12 +378,7 @@ for (i in seq(1:nrow(total_species_by_year))){
 ## Bat species confirmed in `r this_year`
 
 ```{r speciesthisyear}
-filtered_all_dat <- all_dat %>% 
-  dplyr::filter(year == this_year) %>% 
-  dplyr::filter(!species_code %in% exclude) %>%
-  separate_rows(species_code)
-
-species_table_this_year <- filtered_all_dat %>% 
+species_table_this_year <- all_dat %>% 
   group_by(grts_cell_id, location_name, recording_night, species_code) %>% 
   summarise(num_confirmed_files = n()) %>% 
   arrange(., species_code) %>% 
@@ -450,7 +444,6 @@ species_count %>%
 ## GRTS cell Metadata
 
 ```{r sitemeta}
-
 metadata <- all_dat %>% 
   dplyr::filter(year == this_year) %>% 
   dplyr::group_by(grts_cell_id, location_name, detector_model, detector_serial_number, mic_type) %>% 
@@ -474,7 +467,6 @@ metadata %>% flextable() %>%
   set_table_properties(., layout = "autofit") %>% 
   set_caption(paste("Metadata for the GRTS cells surveyed in", this_year)) %>% 
   colformat_char(na_str = "-")
-
 ```
 
 ***
