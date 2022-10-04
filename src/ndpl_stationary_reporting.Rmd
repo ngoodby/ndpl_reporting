@@ -294,7 +294,6 @@ if (length(cells[[1]])==0){
 
 Species that may occur in surveyed area of the `r partner` and the specific and general categories in which they are included. Species of Greatest Conservation Need (SGCN), as designated by the State's Wildlife Action Plan, are bolded.
 
-
 ```{r species frequency table}
 #bring in data on which species are SGCN in the state specified by the K-Pro region
 sgcn <- read_csv(here::here('data', 'sgcn_final_data.csv')) %>% dplyr::select(-1) %>% 
@@ -307,13 +306,13 @@ available_sgrams <- list.files(here::here("sonograms"), full.names = F) %>% str_
 #create hyperlinks for the frequency table output
 species_reference_table %>% dplyr::filter(species_code_6 %in% spp_list$name) %>% 
   mutate(freq_range = case_when(
-    species_code %in% available_sgrams ~ sprintf("![%s](../sonograms/%s.png)", freq_range, species_code),
+    species_code %in% available_sgrams ~ sprintf("![%s](../sonograms/%s_sgram.png)", freq_range, species_code),
     !species_code %in% available_sgrams ~ freq_range
   )) %>% 
   mutate(species_scientific = case_when(
     is.na(species_url) ~ species_scientific,
-    !is.na(species_url) & (!species_scientific %in% sgcn) ~ sprintf("![*%s*](%s)", species_scientific, species_url),
-    !is.na(species_url) & (species_scientific %in% sgcn) ~ sprintf("![***%s***](%s)", species_scientific, species_url)
+    !is.na(species_url) & (!species_scientific %in% sgcn) ~ sprintf("[*%s*](%s)", species_scientific, species_url),
+    !is.na(species_url) & (species_scientific %in% sgcn) ~ sprintf("[*%s* (SGCN)](%s)", species_scientific, species_url)
   )) %>% 
   dplyr::select(species_scientific, species_scientific, common_name, freq_range) %>%
   rename("Scientific Name" = species_scientific, 

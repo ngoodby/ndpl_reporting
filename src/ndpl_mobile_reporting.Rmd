@@ -380,13 +380,13 @@ available_sgrams <- list.files(here::here("sonograms"), full.names = F) %>% str_
 #create hyperlinks for the frequency table output
 species_reference_table %>% dplyr::filter(species_code_6 %in% spp_list$name) %>% 
   mutate(freq_range = case_when(
-    species_code %in% available_sgrams ~ sprintf("![%s](../sonograms/%s.png)", freq_range, species_code),
+    species_code %in% available_sgrams ~ sprintf("![%s](../sonograms/%s_sgram.png)", freq_range, species_code),
     !species_code %in% available_sgrams ~ freq_range
   )) %>% 
   mutate(species_scientific = case_when(
     is.na(species_url) ~ species_scientific,
-    !is.na(species_url) & (!species_scientific %in% sgcn) ~ sprintf("![*%s*](%s)", species_scientific, species_url),
-    !is.na(species_url) & (species_scientific %in% sgcn) ~ sprintf("![***%s***](%s)", species_scientific, species_url)
+    !is.na(species_url) & (!species_scientific %in% sgcn) ~ sprintf("[*%s*](%s)", species_scientific, species_url),
+    !is.na(species_url) & (species_scientific %in% sgcn) ~ sprintf("[*%s* (SGCN)](%s)", species_scientific, species_url)
   )) %>% 
   dplyr::select(species_scientific, species_scientific, common_name, freq_range) %>%
   rename("Scientific Name" = species_scientific, 
@@ -433,7 +433,6 @@ total_species_by_grts_this_year <- dat_count %>% dplyr::filter(year == this_year
 
 total_species_by_year <- dat_count %>% dplyr::filter(pres_abs == TRUE) %>%
   group_by(year) %>% summarise(n = n_distinct(species))
-
 ```
 
 ***In `r this_year`, we confirmed the presence of `r total_species_this_year` bat species (see Table \@ref(tab:speciesthisyear)):***
