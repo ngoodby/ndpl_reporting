@@ -292,7 +292,7 @@ if (length(cells[[1]])==0){
 
 # __Potential Species__
 
-Species that may occur in surveyed area of the `r partner` and the specific and general categories in which they are included. Species of Greatest Conservation Need (SGCN), as designated by the State's Wildlife Action Plan, are bolded.
+Species that may occur in surveyed area of the `r partner` and their characteristic frequncy range. Click on the arrows to view an example sonogrgam for each species. 
 
 ```{r species frequency table}
 #bring in data on which species are SGCN in the state specified by the K-Pro region
@@ -304,21 +304,28 @@ sgcn <- read_csv(here::here('data', 'sgcn_final_data.csv')) %>% dplyr::select(-1
 available_sgrams <- list.files(here::here("sonograms"), full.names = F) %>% str_split(pattern = "_", simplify=T) %>% .[,1]
 
 #create hyperlinks for the frequency table output
-species_reference_table %>% dplyr::filter(species_code_6 %in% spp_list$name) %>% 
-  mutate(freq_range = case_when(
-    species_code %in% available_sgrams ~ sprintf("![%s](../sonograms/%s_sgram.png)", freq_range, species_code),
-    !species_code %in% available_sgrams ~ freq_range
-  )) %>% 
+freqs <- species_reference_table %>% dplyr::filter(species_code_6 %in% spp_list$name) %>% 
   mutate(species_scientific = case_when(
     is.na(species_url) ~ species_scientific,
     !is.na(species_url) & (!species_scientific %in% sgcn) ~ sprintf("[*%s*](%s)", species_scientific, species_url),
-    !is.na(species_url) & (species_scientific %in% sgcn) ~ sprintf("[*%s* (SGCN)](%s)", species_scientific, species_url)
+    !is.na(species_url) & (species_scientific %in% sgcn) ~ sprintf("[*%s* (SGCN in %s)](%s)", species_scientific, kpro_region, species_url)
   )) %>% 
-  dplyr::select(species_scientific, species_scientific, common_name, freq_range) %>%
-  rename("Scientific Name" = species_scientific, 
-         "Common Name" = common_name,
-         "Characteristic Frequency Range (kHz)" = freq_range) %>%
-  kable()
+  dplyr::select(species_scientific, species_scientific, common_name, freq_range, species_code)
+```
+
+```{r, results='asis', eval=TRUE}
+# print photos under expandable labels
+for (i in seq(1, nrow(freqs))){
+  cat("<details>\n")
+  cat(sprintf("<summary>%s - %s kHz</summary>\n", 
+              freqs[i,]$species_scientific, freqs[i,]$freq_range))
+  if (freqs[i,]$species_code %in% available_sgrams){
+    cat(sprintf("![](../sonograms/%s_sgram.png)\n", freqs[i,]$species_code))
+    } else {
+      cat("No sonogram available for this species.")
+    }
+  cat("</details>\n\n")
+}
 ```
 
 ***
