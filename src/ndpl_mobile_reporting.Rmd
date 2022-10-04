@@ -401,6 +401,7 @@ for (i in seq(1, nrow(freqs))){
   cat("</details>\n\n")
 }
 ```
+
 ***
 
 # __Results__
@@ -445,7 +446,7 @@ total_species_by_year <- dat_count %>% dplyr::filter(pres_abs == TRUE) %>%
 
 ```{r results='asis'}
 for (i in seq(1:length(report_grts))){
-  cat(sprintf("\n \t - %g species in GRTS %g", total_species_by_grts_this_year[i,]$n, total_species_by_grts_this_year[i,]$grts_cell_id))
+  cat(sprintf("<p> %g species in GRTS %g </p>\n", total_species_by_grts_this_year[i,]$n, total_species_by_grts_this_year[i,]$grts_cell_id))
 }
 ```
 
@@ -453,7 +454,7 @@ for (i in seq(1:length(report_grts))){
 
 ```{r results='asis'}
   for (i in seq(1:nrow(total_species_by_year))){
-    cat(sprintf("\n \t - %g species in %g", total_species_by_year[i,]$n, total_species_by_year[i,]$year))
+    cat(sprintf("<p> %g species in %g </p> \n", total_species_by_year[i,]$n, total_species_by_year[i,]$year))
   }
 ```
 
