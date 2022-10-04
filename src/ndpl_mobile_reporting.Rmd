@@ -262,7 +262,10 @@ map %>%
   addCircleMarkers(data = detections, lat = ~latitude, lng = ~longitude, 
              label = ~paste0('Manual species ID: ', `manual_name`),
              color = ~factpal(manual_name),
-             group = 'Detections') %>% 
+             weight = 1,
+             fillOpacity = 0.7,
+             group = 'Detections',
+             ) %>% 
   addLegend(data = detections, pal = factpal, values = ~manual_name, opacity = 1, 
             group = "Legend", position = 'bottomright', title = "Manual Species ID") %>% 
   addLayersControl(
