@@ -1,4 +1,4 @@
-load_mobile_data <-  function(username, password, project_id, report_grts, mobile_exclude){
+load_mobile_data <-  function(username, password, project_id, mobile_exclude){
   #' @title Load mobile NABat data
   #'
   #' @description Load and clean mobile acoustic NABat survey data.
@@ -21,10 +21,6 @@ load_mobile_data <-  function(username, password, project_id, report_grts, mobil
     }
   }
   
-  if (report_grts[1] != ""){
-    ma_survey_df = ma_survey_df %>% dplyr::filter(grts_cell_id %in% report_grts)
-  }
-  
   token = get_refresh_token(token)
   ma_bulk_df = get_ma_bulk_wavs(token,
                                 ma_survey_df,
@@ -33,18 +29,23 @@ load_mobile_data <-  function(username, password, project_id, report_grts, mobil
   token = get_refresh_token(token)
   species_df = get_species(token = token)
   mobile_all_dat <- left_join(ma_bulk_df, species_df, by = c("manual_id" = "id"), keep=F)
-  
   mobile_all_dat$survey_event_id <- as.numeric(mobile_all_dat$survey_event_id)
   ma_survey_df$survey_event_id <- as.numeric(ma_survey_df$survey_event_id)
   mobile_all_dat <- left_join(mobile_all_dat, ma_survey_df, keep=F) %>% 
-    mutate(year = lubridate::year(recording_night))
+    mutate(year = lubridate::year(recording_night)) %>% 
+    dplyr::filter(!manual_name %in% mobile_exclude) %>% 
+    dplyr::filter(!is.na(manual_name)) 
   
-  ma_proj_dates = unique(mobile_all_dat$year)
-  this_year = max(ma_proj_dates)
+  ma_proj_dates <-  unique(mobile_all_dat$year)
+  
+  this_year <- max(ma_proj_dates)
+  
+  report_grts <- unique(mobile_all_dat$grts_cell_id)
+  
+  mobile_all_dat <- mobile_all_dat %>% dplyr::filter(year == this_year, 
+                                                     grts_cell_id %in% report_grts)
+  
   mobile_dat_count <- mobile_all_dat %>% #filtering on dat_count instead of all_dat allows for a count of calls later on and preserves couplets
-    dplyr::filter(!species_code %in% mobile_exclude) %>% 
-    # dplyr::filter(nchar(species_code) == 4) %>% 
-    dplyr::filter(!is.na(manual_id)) %>%
     separate_rows(species_code) %>% 
     dplyr::group_by(recording_night, grts_cell_id, species_code) %>%
     dplyr::summarise(n = n()) %>%

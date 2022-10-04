@@ -57,12 +57,10 @@ knitr::opts_chunk$set(echo = FALSE,
 username = 'clong@batcon.org'
 password = 'Myotisciliolabrum@9721'
 report_grts = c("")
-mobile_grts = c(170)
 project_id = 911
 report_locations = ""
 forest_id <- "BishopBLM_20220831"
 partner <- "USFS"
-
 exclude <- c("LACITABR", "LANOTABR","LABLPAHE", "LABOPESU", "EUMAEUPE","EUMAIDPH", "MYCAMYYU", "MYEVMYTH", "MYLUMYVO", "EPFULANO", "Q10k", "Q15k", "Q20k", "Q25k", "Q40k", "40kMyo", "40k", "Q50k", "LACITABR,HiF", "Q25k,MYCAMYYU", "Q25k,HiF", "Q40k,Q25k", "Q40k,LoF", "MY40", "Social", "25K", "25k", "NOISE", "LowF", "HighF", "NoID", "LoF", "HiF", "Noise", "MYSP")
 
 mobile_exclude = c('NOISE', 'NoID', 'Noise')
@@ -90,7 +88,7 @@ this_year = max(all_dat$year)
 
 #mobile
 source(here::here('src', 'load_mobile_acoustic_data_function.R'))
-mobile_data <- load_mobile_data(username, password, project_id, report_grts, mobile_exclude)
+mobile_data <- load_mobile_data(username, password, project_id, mobile_exclude)
 mobile_all_dat <- mobile_data[[1]]
 mobile_dat_count <- mobile_data[[2]]
 ma_survey_df <- mobile_data[[3]]
@@ -112,10 +110,6 @@ all_dat <- all_dat %>% left_join(species_reference_table,
 current_year <- as.character(this_year)
 
 mobile_all_dat <- mobile_all_dat %>% 
-  # left_join(species_reference_table, 
-  #   by = c("species_code" = "species_code", 
-  #  "species_code_6"="species_code_6"),
-  # mutate("common_name" = common_name.y) %>% dplyr::select(-common_name.x, -common_name.y) %>% 
   left_join(detector_codes, by = c("detector_type_id"="id")) %>% 
   left_join(mic_codes, by = c("microphone_type_id"="id"))
 
@@ -225,30 +219,57 @@ map[[1]]
 # __Map of Mobile Transects__
 
 ```{r}
-library(geojsonsf)
+load(paste0(here::here(), "/data/grts.grid.rda"))
 source(here::here("src", "mobile_route_function.R"))
 
+mobile_grts <- unique(mobile_all_dat$grts_cell_id)
+mobile_transects <- list()
 for (i in mobile_grts){
-  transect_info <- get_mobile_route(username, password, grts_id, project_id)
+  df <- get_mobile_route(username, password, i, project_id)
+  coords <- df[["transect"]][["coordinates"]] 
+  transect <- data.frame(matrix(unlist(coords), nrow=length(coords), byrow=TRUE)) %>% list()
+  mobile_transects <- append(mobile_transects, transect)
 }
 
-transect_info <- get_mobile_route(username, password, grts_id, project_id)
-
-
-load(paste0(here::here(), "/data/grts.grid.rda"))
-grts_mapping <- grts.grid %>% 
+all_grts <- grts.grid %>% 
   st_as_sf() %>%
-  dplyr::filter(GRTS_ID %in% mobile_grts) %>% 
+  dplyr::filter(GRTS_ID %in% unique(mobile_all_dat$grts_cell_id)) %>% 
   dplyr::filter(country == "US")
 
-mobile_detection_coords <- transect_info[["transect"]][["coordinates"]] 
-mobile_detections <- data.frame(matrix(unlist(mobile_detection_coords), nrow=length(mobile_detection_coords), byrow=TRUE))
+detections <- mobile_all_dat %>% dplyr::select(manual_name, latitude, longitude, recording_time) %>% 
+  arrange(manual_name)
 
-mobile_detections %>% leaflet() %>% 
-  addProviderTiles("Esri.WorldTopoMap") %>% 
-  addPolylines(lat = ~X2, lng = ~X1, weight = 3, color = 'red') %>% 
-  addPolygons(data = grts_mapping, label = ~paste("NABat Cell ", GRTS_ID), fillOpacity = 0, weight = 2)
+# Create the underlying map
+map <- leaflet() %>%
+    addProviderTiles("Esri.WorldTopoMap")
 
+# Loop over transects to include.
+for (i in mobile_transects) {
+    map <- map %>%
+      addPolylines(data = i, lat = ~X2, lng = ~X1, weight = 3, group = "Transect Routes")
+}
+
+#set up colors for species ids
+ids <- n_distinct(detections$manual_name)
+levels <- unique(detections$manual_name)
+labels <- levels
+detections$manual_name <- factor(detections$manual_name, levels = levels, labels = labels) 
+factpal <- colorFactor(brewer.pal(ids, "Dark2"), detections$manual_name)
+
+#add detections and GRTS cell boundaries and print
+map %>% 
+  addPolygons(data = all_grts, label = ~paste("NABat Cell ", GRTS_ID), fillOpacity = 0, weight = 2) %>% 
+  addCircleMarkers(data = detections, lat = ~latitude, lng = ~longitude, 
+             label = ~paste0('Manual species ID: ', `manual_name`),
+             color = ~factpal(manual_name),
+             group = 'Detections') %>% 
+  addLegend(data = detections, pal = factpal, values = ~manual_name, opacity = 1, 
+            group = "Legend", position = 'bottomright', title = "Manual Species ID") %>% 
+  addLayersControl(
+    overlayGroups = c("Transect Routes", "Detections", "Legend"),
+    options = layersControlOptions(collapsed = FALSE)
+  ) %>% 
+  hideGroup(c("Detections", "Legend"))
 ```
 
 # __Site Photos__
