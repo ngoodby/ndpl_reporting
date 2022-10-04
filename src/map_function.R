@@ -1,7 +1,7 @@
 make_map <- function(all_dat, dat_count){
   #' @title Make Map
   #'
-  #' @description Generate map of relevant GRTS and survey sites.
+  #' @description Generate map of relevant GRTS and survey sites for stationary acoustic data.
   #' 
 
   #bringing in GRTS shapefile

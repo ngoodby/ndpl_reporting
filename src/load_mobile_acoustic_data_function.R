@@ -1,10 +1,8 @@
-load_mobile_data <-  function(username, password, project_id, report_grts){
+load_mobile_data <-  function(username, password, project_id, report_grts, mobile_exclude){
   #' @title Load mobile NABat data
   #'
   #' @description Load and clean mobile acoustic NABat survey data.
-  
-  exclude = c('NOISE', 'NoID', 'Noise')
-  
+
   token = get_nabat_gql_token(username, password)
   token = get_refresh_token(token)
   project_df = get_projects(token)
@@ -44,8 +42,8 @@ load_mobile_data <-  function(username, password, project_id, report_grts){
   ma_proj_dates = unique(mobile_all_dat$year)
   this_year = max(ma_proj_dates)
   mobile_dat_count <- mobile_all_dat %>% #filtering on dat_count instead of all_dat allows for a count of calls later on and preserves couplets
-    dplyr::filter(!species_code %in% exclude) %>% 
-    dplyr::filter(nchar(species_code) == 4) %>% 
+    dplyr::filter(!species_code %in% mobile_exclude) %>% 
+    # dplyr::filter(nchar(species_code) == 4) %>% 
     dplyr::filter(!is.na(manual_id)) %>%
     separate_rows(species_code) %>% 
     dplyr::group_by(recording_night, grts_cell_id, species_code) %>%
