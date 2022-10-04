@@ -205,7 +205,7 @@ margin: auto;
 </style>
 
 ```{r map, fig.cap="\\label{fig:map}Map of surveyed locations"}
-source(here::here("src", "map_function.R"))
+source(here::here("src", "stationary_acoustic_map_function.R"))
 map <- make_map(all_dat, dat_count)
 unlink(here::here("geojson_files"), recursive = T) 
 dir.create(here::here("geojson_files"))
