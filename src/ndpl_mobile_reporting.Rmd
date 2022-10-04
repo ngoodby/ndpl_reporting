@@ -61,6 +61,7 @@ project_id = 911
 report_locations = ""
 forest_id <- "BishopBLM_20220831"
 partner <- "USFS"
+
 exclude <- c("LACITABR", "LANOTABR","LABLPAHE", "LABOPESU", "EUMAEUPE","EUMAIDPH", "MYCAMYYU", "MYEVMYTH", "MYLUMYVO", "EPFULANO", "Q10k", "Q15k", "Q20k", "Q25k", "Q40k", "40kMyo", "40k", "Q50k", "LACITABR,HiF", "Q25k,MYCAMYYU", "Q25k,HiF", "Q40k,Q25k", "Q40k,LoF", "MY40", "Social", "25K", "25k", "NOISE", "LowF", "HighF", "NoID", "LoF", "HiF", "Noise", "MYSP")
 
 mobile_exclude = c('NOISE', 'NoID', 'Noise')
@@ -493,12 +494,9 @@ species_count %>%
 ```{r mobile results}
 
 filtered_mobile_all_dat <- mobile_all_dat %>% 
-  # dplyr::filter(year == this_year) %>% 
   separate(survey_start_time, c('start_night', 'start_time'), sep='T') %>% 
-    separate(survey_end_time, c('end_night', 'end_time'), sep='T') %>% 
-  dplyr::filter(!species_code %in% mobile_exclude) %>%
+  separate(survey_end_time, c('end_night', 'end_time'), sep='T') %>% 
   separate_rows(species_code)
-
 
 mobile_table_this_year <- filtered_mobile_all_dat %>% 
   group_by(site_name, start_night, species_code) %>% 
@@ -508,7 +506,6 @@ mobile_table_this_year <- filtered_mobile_all_dat %>%
               values_from = num_confirmed_files,
               values_fill = ) %>% 
   arrange(., site_name, start_night) %>% 
-  # mutate(grts_cell_id = as.character(grts_cell_id)) %>% 
   rename("Location Name"=site_name, "Monitoring Night"=start_night)
      
 mobile_table_this_year %>%
@@ -557,21 +554,16 @@ metadata %>% flextable() %>%
 ```
 
 ```{r mobile_meta}
-#Christen makes mobile metadata
-
 mobile_metadata <- mobile_all_dat %>% 
-  dplyr::filter(year == this_year) %>% 
    dplyr::group_by(site_name, detector_model, detector_serial_number, mic_type) %>% 
    dplyr::summarise(start = first(survey_start_time), end = first(survey_end_time)) 
- # mutate(grts_cell_id = as.character(grts_cell_id))
-    
 
 mobile_metadata %>% flextable() %>% 
   merge_v(j = "site_name") %>% 
   set_header_labels(.,
                     site_name = "Location Name",
-                    survey_start_time = "Survey Start Time",
-                    survey_end_time = "Survey End Time",
+                    start = "Survey Start Time",
+                    end = "Survey End Time",
                     detector_model = "Detector Type",
                     detector_serial_number = "Detector Serial #",
                     mic_type = "Microphone Type") %>% 
@@ -579,7 +571,6 @@ mobile_metadata %>% flextable() %>%
   bg(., bg = "light grey", part = "header") %>% 
   bold(., j = 1, bold = TRUE) %>%
   flextable::align(., align = "center", part = "all") %>% 
-
   set_table_properties(., layout = "autofit") %>% 
   set_caption(paste("Metadata for the mobile transects  surveyed in", this_year)) %>% 
   colformat_char(na_str = "-")
@@ -598,7 +589,6 @@ survey_dates <- all_dat %>%
   arrange(., grts_cell_id, location_name, year) %>% 
   mutate(month = lubridate::month(start_date, label=T, abbr=F), day = lubridate::day(start_date)) %>% 
   unite('start', month:day, remove = T, sep = " ") %>% 
-  # mutate(grts_cell_id = as.character(grts_cell_id)) %>% 
   pivot_wider(id_cols = c(grts_cell_id, location_name), names_from = year, values_from = start, values_fill = "-")
 
 survey_dates %>% flextable() %>% 
@@ -616,16 +606,18 @@ survey_dates %>% flextable() %>%
 ```
 
 ***
-<!-- # __Example Sonograms__ -->
+# __Example Sonograms__
 
 ```{r}
 # name files "speciesCode_locationName.png" (e.g. "ANPA_Water Tank.png")
-sgram_list <- list.files(here::here("report_specific_sonograms"), full.names = F) %>% str_split(pattern = "_|\\.", simplify=T) %>%
-  data.frame() %>% dplyr::select(-X3) 
+sgram_list <- list.files(here::here("report_specific_sonograms"), full.names = F) %>%
+  str_split(pattern = "_", n=2, simplify=T) %>% as_tibble() %>% 
+  mutate(site_name = str_split(V2, pattern = "\\.", simplify = T)[,1]) %>% 
+  dplyr::select(-V2) 
 names(sgram_list) <- c("species", "location_name")
-sgram_paths <- list.files(here::here("report_specific_sonograms"), full.names = T) %>% data.frame()
+sgram_paths <- list.files(here::here("report_specific_sonograms"), full.names = T) %>% data.frame() 
 names(sgram_paths) <- "path"
-sonograms <- bind_cols(sgram_list, sgram_paths) %>% left_join(species_reference_table, by = c("species" = "species_code"))
+sonograms <- bind_cols(sgram_list, sgram_paths) %>% left_join(species_reference_table, by = c("species" = "species_code")) 
 ```
 
 ```{r, results='asis', eval=TRUE}
