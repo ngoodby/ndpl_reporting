@@ -51,6 +51,7 @@ knitr::opts_chunk$set(echo = FALSE,
   library(reticulate)
   library(googlesheets4)
   library(readxl)
+  library(RColorBrewer)
 ```
 
 ```{r Inputs}
