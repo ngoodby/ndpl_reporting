@@ -378,7 +378,8 @@ sgcn <- read_csv(here::here('data', 'sgcn_final_data.csv')) %>% dplyr::select(-1
 available_sgrams <- list.files(here::here("sonograms"), full.names = F) %>% str_split(pattern = "_", simplify=T) %>% .[,1]
 
 #create hyperlinks for the frequency table output
-freqs <- species_reference_table %>% dplyr::filter(species_code_6 %in% spp_list$name) %>% 
+freqs <- species_reference_table %>% dplyr::filter(species_code_6 %in% spp_list$name) %>%
+  arrange(species_scientific) %>% 
   mutate(species_scientific = case_when(
     is.na(species_url) ~ species_scientific,
     !is.na(species_url) & (!species_scientific %in% sgcn) ~ sprintf("[*%s*](%s)", species_scientific, species_url),
@@ -446,7 +447,7 @@ total_species_by_year <- dat_count %>% dplyr::filter(pres_abs == TRUE) %>%
 
 ```{r results='asis'}
 for (i in seq(1:length(report_grts))){
-  cat(sprintf("<p> %g species in GRTS %g </p>\n", total_species_by_grts_this_year[i,]$n, total_species_by_grts_this_year[i,]$grts_cell_id))
+  cat(sprintf("<p> - %g species in GRTS %g </p>\n", total_species_by_grts_this_year[i,]$n, total_species_by_grts_this_year[i,]$grts_cell_id))
 }
 ```
 
@@ -454,7 +455,7 @@ for (i in seq(1:length(report_grts))){
 
 ```{r results='asis'}
   for (i in seq(1:nrow(total_species_by_year))){
-    cat(sprintf("<p> %g species in %g </p> \n", total_species_by_year[i,]$n, total_species_by_year[i,]$year))
+    cat(sprintf("<p> - %g species in %g </p> \n", total_species_by_year[i,]$n, total_species_by_year[i,]$year))
   }
 ```
 
@@ -606,7 +607,7 @@ mobile_metadata %>% flextable() %>%
 
 ***
 
-## Stationary Survey Datess
+## Stationary Survey Dates
 
 ```{r surveydates}
 survey_dates <- all_dat %>% 
