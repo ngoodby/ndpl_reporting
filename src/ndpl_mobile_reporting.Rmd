@@ -1,5 +1,5 @@
 ---
-title: "__NABat Stationary Acoustic Survey Results__"
+title: "__NABat Acoustic Survey Results__"
 date: "Report produced `r format(Sys.time(), '%d %B, %Y')`"
 output:
   bookdown::html_document2:
@@ -634,7 +634,7 @@ survey_dates %>% flextable() %>%
 ```
 
 ***
-# __Example Sonograms__
+# __Select Sonograms__
 
 ```{r}
 # name files "speciesCode_locationName.png" (e.g. "ANPA_Water Tank.png")
