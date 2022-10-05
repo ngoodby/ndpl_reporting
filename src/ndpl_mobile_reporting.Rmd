@@ -383,7 +383,7 @@ freqs <- species_reference_table %>% dplyr::filter(species_code_6 %in% spp_list$
   mutate(species_scientific = case_when(
     is.na(species_url) ~ species_scientific,
     !is.na(species_url) & (!species_scientific %in% sgcn) ~ sprintf("[*%s*](%s)", species_scientific, species_url),
-    !is.na(species_url) & (species_scientific %in% sgcn) ~ sprintf("[*%s*](%s) (SGCN in %s)", species_scientific, species_url, kpro_region)
+    !is.na(species_url) & (species_scientific %in% sgcn) ~ sprintf("[*%s*](%s)*", species_scientific, species_url, kpro_region)
   )) %>% 
   dplyr::select(species_scientific, species_scientific, common_name, freq_range, species_code)
 ```
