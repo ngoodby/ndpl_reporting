@@ -1,5 +1,5 @@
 ---
-title: "__NABat Stationary Acoustic Survey Results__"
+title: "__NABat Acoustic Survey Results__"
 date: "Report produced `r format(Sys.time(), '%d %B, %Y')`"
 output:
   bookdown::html_document2:
@@ -14,6 +14,22 @@ knitr::opts_chunk$set(echo = FALSE,
                       warning = FALSE,
                       message = FALSE,
                       fig.align = "center")
+```
+
+```{r Inputs}
+# set report type as either "stationary" or "mobile"
+report_type = "mobile"
+username = 'clong@batcon.org'
+password = 'Myotisciliolabrum@9721'
+report_grts = c("")
+project_id = 911
+report_locations = c("")
+forest_id <- "BishopBLM_20220831"
+partner <- "USFS"
+
+exclude <- c("LACITABR", "LANOTABR","LABLPAHE", "LABOPESU", "EUMAEUPE","EUMAIDPH", "MYCAMYYU", "MYEVMYTH", "MYLUMYVO", "EPFULANO", "Q10k", "Q15k", "Q20k", "Q25k", "Q40k", "40kMyo", "40k", "Q50k", "LACITABR,HiF", "Q25k,MYCAMYYU", "Q25k,HiF", "Q40k,Q25k", "Q40k,LoF", "MY40", "Social", "25K", "25k", "NOISE", "LowF", "HighF", "NoID", "LoF", "HiF", "Noise", "MYSP")
+
+mobile_exclude = c('NOISE', 'NoID', 'Noise')
 ```
 
 ```{r results = 'hide'}
@@ -51,22 +67,7 @@ knitr::opts_chunk$set(echo = FALSE,
   library(reticulate)
   library(googlesheets4)
   library(readxl)
-```
-
-```{r Inputs}
-
-username = 'clong@batcon.org'
-password = 'Myotisciliolabrum@9721'
-report_grts = c(106, 2858)
-project_id = 353
-report_locations = ""
-forest_id <- "BishopBLM_20220831"
-partner <- "USFS"
-
-exclude <- c("LACITABR", "LANOTABR","LABLPAHE", "LABOPESU", "EUMAEUPE","EUMAIDPH", "MYCAMYYU", "MYEVMYTH",
-             "MYLUMYVO", "EPFULANO", "Q10k", "Q15k", "Q20k", "Q25k", "Q40k", "40kMyo", "40k", "Q50k", 
-             "LACITABR,HiF", "Q25k,MYCAMYYU", "Q25k,HiF", "Q40k,Q25k", "Q40k,LoF", "MY40", "Social", "25K", 
-             "25k", "NOISE", "LowF", "HighF", "NoID", "LoF", "HiF", "Noise", "MYSP")
+  library(RColorBrewer)
 ```
 
 ![](../images/BCI_logo.png){height=100}
@@ -81,12 +82,21 @@ if (paste0(partner, ".png") %in% logos){
 ```
 
 ```{r NABat API, results = 'hide'}
+#stationary
 source(here::here("src", "load_stationary_acoustic_data_function.R"))
 data <- load_nabat_data(username, password, project_id, report_grts, report_locations, exclude)
 all_dat <- data[[1]]
 dat_count <- data[[2]]
 sa_survey_df <- data[[3]]
 this_year = max(all_dat$year)
+
+#mobile
+source(here::here('src', 'load_mobile_acoustic_data_function.R'))
+mobile_data <- load_mobile_data(username, password, project_id, mobile_exclude)
+mobile_all_dat <- mobile_data[[1]]
+mobile_dat_count <- mobile_data[[2]]
+ma_survey_df <- mobile_data[[3]]
+mobile_this_year = max(mobile_all_dat$year)
 ```
 
 ```{r}
@@ -102,6 +112,10 @@ all_dat <- all_dat %>% left_join(species_reference_table,
   left_join(detector_codes, by = c("detector_type_id"="id")) %>% 
   left_join(mic_codes, by = c("microphone_type_id"="id"))
 current_year <- as.character(this_year)
+
+mobile_all_dat <- mobile_all_dat %>% 
+  left_join(detector_codes, by = c("detector_type_id"="id")) %>% 
+  left_join(mic_codes, by = c("microphone_type_id"="id"))
 ```
 
 ***
@@ -167,7 +181,7 @@ if (all(is.na(added_species)) & all(is.na(subtracted_species))){
 
 Sonobat 4.4 was then used to manually identify files.
 
-We attempted to confirm the identification of a maximum of three files per species, per night, per site by visually inspecting the species ID proposed by Sonobat 4.4. Up to 10 files per species-site-night were reviewed in an attempt to confirm the species ID of 3 files. Review options included:
+For stationary data, we attempted to confirm the identification of a maximum of three files per species, per night, per site by visually inspecting the species ID proposed by Sonobat 4.4. Up to 10 files per species-site-night were reviewed in an attempt to confirm the species ID of 3 files. Review options included:
 
 1. Confirming species as assigned by the programs; 
 
@@ -179,9 +193,15 @@ We attempted to confirm the identification of a maximum of three files per speci
 
 We reviewed files in order of confidence in identification as expressed by the program. A confirmed identification of a species in one or more files on a given night at a given site resulted in a designation of species presence for that site-night. Identification of up to three files added an additional measure of confidence to species presence designations. When we could not assign any files recorded on a site-night to species, that species was considered “not detected.”
 
+```{r results = 'asis'}
+if (report_type=="mobile"){
+  cat("For mobile transects, every file not scrubbed out as noise was manually viewed in Sonobat.")
+}
+```
+
 ***
 
-# __Map of Survey Locations__
+# __Map of Stationary Survey Locations__
 
 This map shows the survey locations included in this report and the NABat cell(s) that they fall within. Hover your cursor over the map to see the NABat GRTS cell number(s) and survey location name(s).
 
@@ -202,6 +222,71 @@ map[[1]]
 ```
 
 ***
+
+```{r results = 'asis'}
+if (report_type=="mobile"){
+  cat("# __Map of Mobile Transects__")
+}
+```
+
+```{r}
+if (report_type=='mobile'){
+  load(paste0(here::here(), "/data/grts.grid.rda"))
+  source(here::here("src", "mobile_route_function.R"))
+  
+  mobile_grts <- unique(mobile_all_dat$grts_cell_id)
+  mobile_transects <- list()
+  for (i in mobile_grts){
+    df <- get_mobile_route(username, password, i, project_id)
+    coords <- df[["transect"]][["coordinates"]] 
+    transect <- data.frame(matrix(unlist(coords), nrow=length(coords), byrow=TRUE)) %>% list()
+    mobile_transects <- append(mobile_transects, transect)
+  }
+  
+  all_grts <- grts.grid %>% 
+    st_as_sf() %>%
+    dplyr::filter(GRTS_ID %in% unique(mobile_all_dat$grts_cell_id)) %>% 
+    dplyr::filter(country == "US")
+  
+  detections <- mobile_all_dat %>% dplyr::select(manual_name, latitude, longitude, recording_time) %>% 
+    arrange(manual_name)
+  
+  # Create the underlying map
+  map <- leaflet() %>%
+      addProviderTiles("Esri.WorldTopoMap")
+  
+  # Loop over transects to include.
+  for (i in mobile_transects) {
+      map <- map %>%
+        addPolylines(data = i, lat = ~X2, lng = ~X1, weight = 3, group = "Transect Routes")
+  }
+  
+  #set up colors for species ids
+  ids <- n_distinct(detections$manual_name)
+  levels <- unique(detections$manual_name)
+  labels <- levels
+  detections$manual_name <- factor(detections$manual_name, levels = levels, labels = labels) 
+  factpal <- colorFactor(brewer.pal(ids, "Dark2"), detections$manual_name)
+  
+  #add detections and GRTS cell boundaries and print
+  map %>% 
+    addPolygons(data = all_grts, label = ~paste("NABat Cell ", GRTS_ID), fillOpacity = 0, weight = 2) %>% 
+    addCircleMarkers(data = detections, lat = ~latitude, lng = ~longitude, 
+               label = ~paste0('Manual species ID: ', `manual_name`),
+               color = ~factpal(manual_name),
+               weight = 1,
+               fillOpacity = 0.7,
+               group = 'Detections',
+               ) %>% 
+    addLegend(data = detections, pal = factpal, values = ~manual_name, opacity = 1, 
+              group = "Legend", position = 'bottomright', title = "Manual Species ID") %>% 
+    addLayersControl(
+      overlayGroups = c("Transect Routes", "Detections", "Legend"),
+      options = layersControlOptions(collapsed = FALSE)
+    ) %>% 
+    hideGroup(c("Detections", "Legend"))
+}
+```
 
 # __Site Photos__
 
@@ -290,9 +375,10 @@ if (length(cells[[1]])==0){
 }
 ```
 
+
 # __Potential Species__
 
-Species that may occur in surveyed area of the `r partner` and their characteristic frequncy range. Click on the arrows to view an example sonogrgam for each species. 
+Species that may occur in surveyed area of the `r partner` and their characteristic frequncy range. Click on the arrows to view an example sonogrgam for each species. Click on the links to learn more about that species.
 
 ```{r species frequency table}
 #bring in data on which species are SGCN in the state specified by the K-Pro region
@@ -307,19 +393,18 @@ available_sgrams <- list.files(here::here("sonograms"), full.names = F) %>% str_
 freqs <- species_reference_table %>% dplyr::filter(species_code_6 %in% spp_list$name) %>%
   arrange(species_scientific) %>% 
   mutate(species_scientific = case_when(
-    is.na(species_url) ~ species_scientific,
-    !is.na(species_url) & (!species_scientific %in% sgcn) ~ sprintf("[*%s*](%s)", species_scientific, species_url),
-    !is.na(species_url) & (species_scientific %in% sgcn) ~ sprintf("[*%s*](%s) (SGCN in %s)", species_scientific, species_url, kpro_region)
+    !is.na(species_url) & (species_scientific %in% sgcn) ~ sprintf("*%s* (SGCN in %s)", species_scientific, kpro_region),
+    T ~ paste0("*", species_scientific, "*")
   )) %>% 
-  dplyr::select(species_scientific, species_scientific, common_name, freq_range, species_code)
+  dplyr::select(species_scientific, species_url, common_name, freq_range, species_code)
 ```
 
 ```{r, results='asis', eval=TRUE}
 # print photos under expandable labels
 for (i in seq(1, nrow(freqs))){
   cat("<details>\n")
-  cat(sprintf("<summary>%s - %s kHz</summary>\n", 
-              freqs[i,]$species_scientific, freqs[i,]$freq_range))
+  cat(sprintf('<summary>\n<a href="%s">%s</a> - %s kHz\n</summary>\n', 
+              freqs[i,]$species_url, freqs[i,]$species_scientific, freqs[i,]$freq_range))
   if (freqs[i,]$species_code %in% available_sgrams){
     cat(sprintf("![](../sonograms/%s_sgram.png)\n", freqs[i,]$species_code))
     } else {
@@ -447,11 +532,40 @@ species_count %>%
   set_caption("Presence (X) or not detected (blank cell) of bat species recorded at stationary sites every year.")
 ```
 
+```{r mobile results}
+if (report_type=='mobile'){
+  filtered_mobile_all_dat <- mobile_all_dat %>% 
+    separate(survey_start_time, c('start_night', 'start_time'), sep='T') %>% 
+    separate(survey_end_time, c('end_night', 'end_time'), sep='T') %>% 
+    separate_rows(species_code)
+  
+  mobile_table_this_year <- filtered_mobile_all_dat %>% 
+    group_by(site_name, start_night, species_code) %>% 
+    summarise(num_confirmed_files = n()) %>% 
+    arrange(., species_code) %>% 
+    pivot_wider(names_from = species_code, 
+                values_from = num_confirmed_files,
+                values_fill = ) %>% 
+    arrange(., site_name, start_night) %>% 
+    rename("Location Name"=site_name, "Monitoring Night"=start_night)
+       
+  mobile_table_this_year %>%
+    flextable(col_keys = names(.)) %>% 
+    merge_v(., j="Location Name") %>% 
+    theme_box() %>%
+    bg(., bg = "light blue", part = "header") %>% 
+    flextable::align(., align = "center", part = "all") %>%
+    bold(., j = 1, bold = TRUE) %>% 
+    set_table_properties(., width = 1, layout = "autofit") %>% 
+  set_caption(paste("Species of bat, group and total number of files containing bat echolocation files recorded on mobile transects."))
+}
+```
+
 ***
 
 # __Metadata__
 
-## GRTS cell Metadata
+## Stationary Acoustic Survey Metadata
 
 ```{r sitemeta}
 metadata <- all_dat %>% 
@@ -460,7 +574,6 @@ metadata <- all_dat %>%
  dplyr::summarise(Latitude = mean(latitude), Longitude = mean(longitude)) %>% 
  mutate(grts_cell_id = as.character(grts_cell_id))
     
-
 metadata %>% flextable() %>% 
   merge_v(j = "grts_cell_id") %>% 
   set_header_labels(.,
@@ -475,13 +588,45 @@ metadata %>% flextable() %>%
   flextable::align(., align = "center", part = "all") %>% 
 
   set_table_properties(., layout = "autofit") %>% 
-  set_caption(paste("Metadata for the GRTS cells surveyed in", this_year)) %>% 
+  set_caption(paste("Metadata for the stationary acoustic surveys in", this_year)) %>% 
   colformat_char(na_str = "-")
+
+```
+
+```{r results='asis'}
+if (report_type == 'mobile'){
+  cat("## Mobile Acoustic Survey Metadata")
+}
+```
+
+```{r mobile_meta}
+if (report_type=='mobile'){
+  mobile_metadata <- mobile_all_dat %>% 
+     dplyr::group_by(site_name, detector_model, detector_serial_number, mic_type) %>% 
+     dplyr::summarise(start = first(survey_start_time), end = first(survey_end_time)) 
+  
+  mobile_metadata %>% flextable() %>% 
+    merge_v(j = "site_name") %>% 
+    set_header_labels(.,
+                      site_name = "Location Name",
+                      start = "Survey Start Time",
+                      end = "Survey End Time",
+                      detector_model = "Detector Type",
+                      detector_serial_number = "Detector Serial #",
+                      mic_type = "Microphone Type") %>% 
+    theme_box() %>% 
+    bg(., bg = "light grey", part = "header") %>% 
+    bold(., j = 1, bold = TRUE) %>%
+    flextable::align(., align = "center", part = "all") %>% 
+    set_table_properties(., layout = "autofit") %>% 
+    set_caption(paste("Metadata for the mobile transects  surveyed in", this_year)) %>% 
+    colformat_char(na_str = "-")
+}
 ```
 
 ***
 
-## Survey Date Metadata
+## Stationary Survey Dates
 
 ```{r surveydates}
 survey_dates <- all_dat %>% 
@@ -491,8 +636,9 @@ survey_dates <- all_dat %>%
   arrange(., grts_cell_id, location_name, year) %>% 
   mutate(month = lubridate::month(start_date, label=T, abbr=F), day = lubridate::day(start_date)) %>% 
   unite('start', month:day, remove = T, sep = " ") %>% 
-  # mutate(grts_cell_id = as.character(grts_cell_id)) %>% 
-  pivot_wider(id_cols = c(grts_cell_id, location_name), names_from = year, values_from = start, values_fill = "-")
+  pivot_wider(id_cols = c(grts_cell_id, location_name), names_from = year, values_from = start, values_fill = "-") %>% 
+  mutate(grts_cell_id = as.character(grts_cell_id))
+  
 
 survey_dates %>% flextable() %>% 
   merge_v(j = "grts_cell_id") %>% 
@@ -503,13 +649,11 @@ survey_dates %>% flextable() %>%
   bg(., bg = "grey", part = "header") %>% 
   flextable::align(., align = "center", part = "all") %>% 
   set_table_properties(., layout = "autofit") %>% 
-
   set_caption("Survey start dates for each year for each detector location.")
-
 ```
 
 ***
-# __Example Sonograms__
+# __Select Sonograms__
 
 ```{r}
 # name files "speciesCode_locationName.png" (e.g. "ANPA_Water Tank.png")
