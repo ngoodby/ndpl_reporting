@@ -77,7 +77,7 @@ mobile_exclude = c('NOISE', 'NoID', 'Noise')
   library(RColorBrewer)
 ```
 
-![](../images/BCI_logo.png){height=100}
+![](../logos/BCI_logo.png){height=100} ![](../logos/CMI_logo.png){height=100} 
 
 ```{r results='asis'}
 # partner name needs to match file name of the logo
@@ -163,7 +163,13 @@ spp_list <- spp_list %>% pivot_longer(., 2:length(spp_list)) %>%
   dplyr::filter(value==1)
 ```
 
-In `r this_year`, the `r partner` implemented acoustic bat monitoring protocols described in _A Plan for the North American Bat Monitoring Program (NABat)_. Stationary detectors were deployed within `r length(report_grts)` GRTS cell(s) for four consecutive nights each. The results of the stationary detectors are presented here. Full spectrum echolocation files were recorded using the detectors in Table \@ref(tab:meta). Figure \@ref(fig:Map) shows the location of each detector within the cell, and Section (Section \@ref(site-photos)) shows the habitat at each site.
+In `r this_year`, the `r partner` implemented acoustic bat monitoring protocols described in _A Plan for the North American Bat Monitoring Program (NABat)_. Stationary detectors were deployed within `r length(report_grts)` GRTS cell(s) for four consecutive nights each. Full spectrum echolocation files were recorded using the detectors in Table \@ref(tab:meta). Figure \@ref(fig:Map) shows the location of each detector within the cell, and Section (Section \@ref(site-photos)) shows the habitat at each site.
+
+```{r results = 'asis'}
+if (report_type=="mobile"){
+  cat(sprintf('Mobile acoustic surveys were conducted on %s nights in %s. Figure UPDATE shows all mobile transect routes conducted.', n_distinct(mobile_all_dat$recording_night), this_year))
+}
+```
 
 The resulting recording files were sent to Bat Conservation International (BCI) for identification of species presence. Data was checked, renamed, and attributed using a custom R and Python code developed by Conservation Metrics Inc (CMI) and the United States Geological Survey (USGS). Files were then scrubbed of noise using Sonobat Data Wizard 4.4. Sonobatch was used in Sonobat 4.4 set to the `r classifier` to determine call parameters and the suggested species identification. Files were then run through Kaleidoscope Pro 5.3.9, set to the `r kpro_region` region, to provide additional automated identification used in manual vetting. 
 
@@ -427,7 +433,7 @@ for (i in seq(1, nrow(freqs))){
 
 ***
 
-# __Results__
+# __Stationary Acoustic Results__
 
 ```{r results="asis"}
 total_species_this_year <- dat_count %>% dplyr::filter(year == this_year, pres_abs == TRUE) %>%
@@ -506,8 +512,6 @@ species_table_this_year %>%
 set_caption(paste("Number of files confirmed for each species and species group detected per site and night at stationary sites in ", this_year))
 ```
 
-***
-
 ## Bat species confirmed each year
 
 ```{r speciesallyears}
@@ -542,7 +546,9 @@ species_count %>%
   set_table_properties(., width = 1, layout = "autofit") %>%
   set_caption("Presence (X) or not detected (blank cell) of bat species recorded at stationary sites every year.")
 ```
+***
 
+# __Mobile Survey Results
 ```{r mobile results}
 if (report_type=='mobile'){
   filtered_mobile_all_dat <- mobile_all_dat %>% 
@@ -571,8 +577,6 @@ if (report_type=='mobile'){
   set_caption(paste("Species of bat, group and total number of files containing bat echolocation files recorded on mobile transects."))
 }
 ```
-
-***
 
 # __Metadata__
 
@@ -707,5 +711,5 @@ if (length(sgram_list)!=0){
 
 To learn more about bats and to support their conservation visit [batcon.org](https://www.batcon.org/).\n
 
-![](../images/NABat_logo.png){height="200"}
+![](../logos/NABat_logo.png){height="200"}
 
