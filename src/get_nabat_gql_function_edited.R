@@ -1,20 +1,11 @@
-get_nabat_gql_token = function(
-    username = NULL,
-    password = NULL,
+get_nabat_gql_token_edited = function(
+    username,
+    password,
     branch = 'prod',
     url = NULL,
     aws_gql = NULL,
     aws_alb = NULL,
     docker = FALSE){
-  
-  # Prompts password input incase password isn't included in function call
-  if (is.null(username)){
-    username = rstudioapi::showPrompt(title = "Username",
-                                      message = "Username", default = "")
-  }
-  if (is.null(password)){
-    password = .rs.askForPassword('Password')
-  }
   
   out = tryCatch({
     # Returns a message with username
@@ -51,8 +42,7 @@ get_nabat_gql_token = function(
                  operationName = 'RRlogin')
     # Query GQL API
     res = POST(url, headers, body = pbody, encode="json")
-    # Remove variables with Password
-    rm(password, variables, pbody)
+
     # Extract token
     content = content(res)
     error  = content$data$login$error
@@ -64,7 +54,7 @@ get_nabat_gql_token = function(
     
     access_token = strsplit(bearer, 'Bearer ')[[1]][2]
     message("Returning a GQL token for NABat.")
-    expires = content$data$login$expires_in - (60 * 10)
+    expires = content$data$login$expires_in
     refresh_at_this = Sys.time() + expires
     return (list(refresh_token = refresh_token, access_token = access_token,
                  refresh_at = refresh_at_this))

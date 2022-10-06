@@ -91,6 +91,7 @@ if (paste0(partner, ".png") %in% logos){
 ```{r NABat API, results = 'hide'}
 #stationary
 source(here::here("src", "load_stationary_acoustic_data_function.R"))
+source(here::here("src", "get_nabat_gql_function_edited.R"))
 data <- load_nabat_data(username, password, project_id, report_grts, report_locations, exclude)
 all_dat <- data[[1]]
 dat_count <- data[[2]]
