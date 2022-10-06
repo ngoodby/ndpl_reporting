@@ -366,7 +366,7 @@ if (length(cells[[1]])==0){
 
 # __Potential Species__
 
-Species that may occur in surveyed area of the `r partner` and their characteristic frequncy range. Click on the arrows to view an example sonogrgam for each species. 
+Species that may occur in surveyed area of the `r partner` and their characteristic frequncy range. Click on the arrows to view an example sonogrgam for each species. Click on the links to learn more about that species.
 
 ```{r species frequency table}
 #bring in data on which species are SGCN in the state specified by the K-Pro region
@@ -381,19 +381,18 @@ available_sgrams <- list.files(here::here("sonograms"), full.names = F) %>% str_
 freqs <- species_reference_table %>% dplyr::filter(species_code_6 %in% spp_list$name) %>%
   arrange(species_scientific) %>% 
   mutate(species_scientific = case_when(
-    is.na(species_url) ~ species_scientific,
-    !is.na(species_url) & (!species_scientific %in% sgcn) ~ sprintf("[*%s*](%s)", species_scientific, species_url),
-    !is.na(species_url) & (species_scientific %in% sgcn) ~ sprintf("[*%s*](%s)*", species_scientific, species_url, kpro_region)
+    !is.na(species_url) & (species_scientific %in% sgcn) ~ paste0(species_scientific, "*"),
+    T ~ species_scientific
   )) %>% 
-  dplyr::select(species_scientific, species_scientific, common_name, freq_range, species_code)
+  dplyr::select(species_scientific, species_url, common_name, freq_range, species_code)
 ```
 
 ```{r, results='asis', eval=TRUE}
 # print photos under expandable labels
 for (i in seq(1, nrow(freqs))){
   cat("<details>\n")
-  cat(sprintf("<summary>%s - %s kHz</summary>\n", 
-              freqs[i,]$species_scientific, freqs[i,]$freq_range))
+  cat(sprintf('<summary>\n<a href="%s"> %s - %s kHz</a>\n</summary>\n', 
+              freqs[i,]$species_url, freqs[i,]$species_scientific, freqs[i,]$freq_range))
   if (freqs[i,]$species_code %in% available_sgrams){
     cat(sprintf("![](../sonograms/%s_sgram.png)\n", freqs[i,]$species_code))
     } else {
