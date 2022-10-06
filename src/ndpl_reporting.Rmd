@@ -18,7 +18,7 @@ knitr::opts_chunk$set(echo = FALSE,
 
 <style type="text/css">
 .main-container {
-  max-width: 100% !important;
+  max-width: 1600px !important;
   margin: auto;
 }
 </style>
@@ -259,7 +259,7 @@ if (report_type=='mobile'){
     arrange(manual_name)
   
   # Create the underlying map
-  map <- leaflet() %>%
+  map <- leaflet(width = "80%") %>%
       addProviderTiles("Esri.WorldTopoMap")
   
   # Loop over transects to include.

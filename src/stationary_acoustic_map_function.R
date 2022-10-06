@@ -28,7 +28,7 @@ make_map <- function(all_dat, dat_count){
     dplyr::summarise(latitude = mean(latitude),
                      longitude = mean(longitude)) %>% 
     dplyr::mutate(country = "US") %>% 
-    leaflet() %>% 
+    leaflet(width = "80%") %>% 
     addProviderTiles("Esri.WorldTopoMap") %>% 
     addPolygons(data = grts_mapping, label = ~paste("NABat Cell ", GRTS_ID), fillOpacity = 0, weight = 2) %>% 
     addCircleMarkers(lat = ~latitude, lng = ~longitude, weight = 1, label = ~paste("Survey Site Name:", location_name))
