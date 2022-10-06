@@ -16,6 +16,13 @@ knitr::opts_chunk$set(echo = FALSE,
                       fig.align = "center")
 ```
 
+<style type="text/css">
+.main-container {
+  max-width: 100% !important;
+  margin: auto;
+}
+</style>
+
 ```{r Inputs}
 # set report type as either "stationary" or "mobile"
 report_type = "mobile"
