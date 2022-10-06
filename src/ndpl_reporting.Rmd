@@ -664,28 +664,40 @@ survey_dates %>% flextable() %>%
 ```
 
 ***
-# __Select Sonograms__
 
 ```{r}
-# name files "speciesCode_locationName.png" (e.g. "ANPA_Water Tank.png")
-sgram_list <- list.files(here::here("report_specific_sonograms"), full.names = F) %>%
-  str_split(pattern = "_", n=2, simplify=T) %>% as_tibble() %>% 
-  mutate(site_name = str_split(V2, pattern = "\\.", simplify = T)[,1]) %>% 
-  dplyr::select(-V2) 
-names(sgram_list) <- c("species", "location_name")
-sgram_paths <- list.files(here::here("report_specific_sonograms"), full.names = T) %>% data.frame() 
-names(sgram_paths) <- "path"
-sonograms <- bind_cols(sgram_list, sgram_paths) %>% left_join(species_reference_table, by = c("species" = "species_code")) 
+sgram_list <- list.files(here::here("report_specific_sonograms"), full.names = F) 
+```
+
+```{r}
+if (length(sgram_list)!=0){
+  cat("# __Select Sonograms__")
+}
+```
+
+```{r}
+if (length(sgram_list)!=0){
+  sgram_list <- list.files(here::here("report_specific_sonograms"), full.names = F) %>%
+    str_split(pattern = "_", n=2, simplify=T) %>% as_tibble() %>% 
+    mutate(site_name = str_split(V2, pattern = "\\.", simplify = T)[,1]) %>% 
+    dplyr::select(-V2) 
+  names(sgram_list) <- c("species", "location_name")
+  sgram_paths <- list.files(here::here("report_specific_sonograms"), full.names = T) %>% data.frame() 
+  names(sgram_paths) <- "path"
+  sonograms <- bind_cols(sgram_list, sgram_paths) %>% left_join(species_reference_table, by = c("species" = "species_code")) 
+}
 ```
 
 ```{r, results='asis', eval=TRUE}
 # print photos under expandable labels
-for (i in seq(1, nrow(sonograms))){
-  cat("<details>\n")
-  cat(sprintf("<summary>Click to View Example Sonogram for <em>%s</em> detected at %s</summary>\n", 
-              sonograms[i,]$species_scientific, sonograms[i,]$location_name))
-  cat(sprintf("![](%s)\n", sonograms[i,]$path))
-  cat("</details>\n\n")
+if (length(sgram_list)!=0){
+  for (i in seq(1, nrow(sonograms))){
+    cat("<details>\n")
+    cat(sprintf("<summary>Click to View Example Sonogram for <em>%s</em> detected at %s</summary>\n", 
+                sonograms[i,]$species_scientific, sonograms[i,]$location_name))
+    cat(sprintf("![](%s)\n", sonograms[i,]$path))
+    cat("</details>\n\n")
+  }
 }
 ```
 
