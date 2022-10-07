@@ -198,7 +198,15 @@ if (all(is.na(added_species)) & all(is.na(subtracted_species))){
 
 Sonobat 4.4 was then used to manually identify files.
 
-For stationary data, we attempted to confirm the identification of a maximum of three files per species, per night, per site by visually inspecting the species ID proposed by the programs. Up to 10 files per species-site-night were reviewed in an attempt to confirm the species ID of 3 files. Review options included:
+For stationary data, we attempted to confirm the identification of a maximum of three files per species, per night, per site by visually inspecting the species ID proposed by the programs. Up to 10 files per species-site-night were reviewed in an attempt to confirm the species ID of 3 files.
+
+```{r results = 'asis'}
+if (report_type=="mobile"){
+  cat("For mobile transects, every file not scrubbed out as noise was viewed manually to confirm the species ID proposed by the programs.")
+}
+```
+
+Review options included:
 
 1. Confirming species as assigned by the programs; 
 
@@ -209,12 +217,6 @@ For stationary data, we attempted to confirm the identification of a maximum of 
 4. Assigning the file as noise, i.e., not a recording of bat echolocation calls. 
 
 We reviewed files in order of confidence in identification as expressed by the programs. A confirmed identification of a species in one or more files on a given night at a given site resulted in a designation of species presence for that site-night. Identification of up to three files added an additional measure of confidence to species presence designations. When we could not assign any files recorded on a site-night to species, that species was considered “not detected.”
-
-```{r results = 'asis'}
-if (report_type=="mobile"){
-  cat("For mobile transects, every file not scrubbed out as noise was viewed manually to confirm the species ID proposed by the programs.")
-}
-```
 
 ***
 
@@ -242,8 +244,7 @@ map[[1]]
 
 ```{r results = 'asis'}
 if (report_type=="mobile"){
-  cat("# __Map of Mobile Transects__"
-      "This map shows the survey locations included in this report and the NABat cell(s) that they fall within. Hover your cursor over the map to see the NABat GRTS cell number(s) and survey location name(s).")
+  cat("# __Map of Mobile Transects__")
 }
 ```
 
@@ -549,8 +550,14 @@ species_count %>%
 ```
 ***
 
-# Mobile Survey Results
-```{r mobile results}
+
+```{r results = 'asis'}
+if (report_type=="mobile"){
+  cat("# __Mobile Survey Results__")
+}
+```
+
+```{r mobileresults}
 if (report_type=='mobile'){
   filtered_mobile_all_dat <- mobile_all_dat %>% 
     separate(survey_start_time, c('start_night', 'start_time'), sep='T') %>% 
