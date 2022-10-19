@@ -4,7 +4,7 @@ load_nabat_data <- function(username, password, project_id, report_grts, report_
   #' @description Load and clean stationary acoustic NABat survey data
   #' 
   
-  token = get_nabat_gql_token(username, password)
+  token = get_nabat_gql_token_edited(username, password)
   token = get_refresh_token(token)
   project_df = get_projects(token)
   token = get_refresh_token(token)

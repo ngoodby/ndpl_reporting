@@ -91,6 +91,7 @@ if (paste0(partner, ".png") %in% logos){
 ```{r NABat API, results = 'hide'}
 #stationary
 source(here::here("src", "load_stationary_acoustic_data_function.R"))
+source(here::here("src", "get_nabat_gql_function_edited.R"))
 data <- load_nabat_data(username, password, project_id, report_grts, report_locations, exclude)
 all_dat <- data[[1]]
 dat_count <- data[[2]]
@@ -499,8 +500,7 @@ species_table_this_year <- all_dat %>%
   pivot_wider(names_from = species_code, 
               values_from = num_confirmed_files,
               values_fill = ) %>% 
-  arrange(., grts_cell_id, location_name, recording_night) %>% 
-  mutate(grts_cell_id = as.character(grts_cell_id)) %>% 
+  arrange(., grts_cell_id, location_name, recording_night) %>%
   rename("GRTS Cell" = grts_cell_id, "Location Name"=location_name, "Monitoring Night"=recording_night)
      
 species_table_this_year %>%
@@ -511,6 +511,7 @@ species_table_this_year %>%
   flextable::align(., align = "center", part = "all") %>%
   bold(., j = 1, bold = TRUE) %>% 
   set_table_properties(., width = 1, layout = "autofit") %>% 
+  colformat_num(big.mark = "") %>% 
 set_caption(paste("Number of files confirmed for each species and species group detected per site and night at stationary sites in ", this_year))
 ```
 
@@ -546,9 +547,11 @@ species_count %>%
   bold(., bold = TRUE, part = "body") %>% 
   flextable::align(., align = "center", part = "all") %>%
   set_table_properties(., width = 1, layout = "autofit") %>%
+  colformat_num(big.mark = "") %>% 
   set_caption("Presence (X) or not detected (blank cell) of bat species recorded at stationary sites every year.")
 ```
 ***
+
 
 
 ```{r results = 'asis'}
@@ -564,22 +567,30 @@ if (report_type=="mobile"){
 ```
 
 ```{r mobileresults}
+
+# __Mobile Survey Results
+
+```{r mobile results}
+
 if (report_type=='mobile'){
   filtered_mobile_all_dat <- mobile_all_dat %>% 
     separate(survey_start_time, c('start_night', 'start_time'), sep='T') %>% 
-    separate(survey_end_time, c('end_night', 'end_time'), sep='T') %>% 
-    separate_rows(species_code)
+    separate(survey_end_time, c('end_night', 'end_time'), sep='T') 
   
   mobile_table_this_year <- filtered_mobile_all_dat %>% 
-    group_by(site_name, start_night, species_code) %>% 
+    group_by(site_name, year, start_night, species_code) %>% 
     summarise(num_confirmed_files = n()) %>% 
     arrange(., species_code) %>% 
     pivot_wider(names_from = species_code, 
-                values_from = num_confirmed_files,
-                values_fill = ) %>% 
-    arrange(., site_name, start_night) %>% 
-    rename("Transect Name"=site_name, "Monitoring Night"=start_night)
-       
+                values_from = num_confirmed_files) %>% 
+    arrange(., site_name, year, start_night) %>% 
+    mutate(start_night = lubridate::ymd(start_night)) %>% 
+    mutate(month = lubridate::month(start_night, label=T, abbr=F), day = lubridate::day(start_night), .before = year) %>% 
+    unite('start_night', month:day, remove = T, sep = " ") %>% 
+    unite('start_night', start_night:year, remove=T, sep = ", ") %>% 
+    rename("Location Name"=site_name, 
+           "Monitoring Night"=start_night)
+
   mobile_table_this_year %>%
     flextable(col_keys = names(.)) %>% 
     merge_v(., j="Transect Name") %>% 
@@ -587,8 +598,10 @@ if (report_type=='mobile'){
     bg(., bg = "light blue", part = "header") %>% 
     flextable::align(., align = "center", part = "all") %>%
     bold(., j = 1, bold = TRUE) %>% 
-    set_table_properties(., width = 0.5, layout = "autofit") %>% 
-  set_caption(paste("Species of bat, group and total number of files containing bat echolocation files recorded on mobile transects."))
+    set_table_properties(., width = 1, layout = "autofit") %>% 
+    colformat_num(big.mark = "") %>% 
+    set_caption(paste("Species of bat, group and total number of files containing bat echolocation files recorded on mobile transects."))
+
 }
 ```
 
@@ -680,6 +693,34 @@ if (report_type=='mobile'){
     set_caption(paste("Metadata for the mobile transects  surveyed in", this_year)) %>% 
     colformat_char(na_str = "-")
 }
+```
+
+***
+
+
+## Stationary Survey Dates
+
+```{r surveydates}
+survey_dates <- all_dat %>% 
+  dplyr::group_by(grts_cell_id, location_name, year) %>% 
+  dplyr::summarise(start_date = min(recording_night)) %>% 
+  mutate(start_date = ymd(start_date)) %>%
+  arrange(., grts_cell_id, location_name, year) %>% 
+  mutate(month = lubridate::month(start_date, label=T, abbr=F), day = lubridate::day(start_date)) %>% 
+  unite('start', month:day, remove = T, sep = " ") %>% 
+  pivot_wider(id_cols = c(grts_cell_id, location_name), names_from = year, values_from = start, values_fill = "-") %>% 
+  mutate(grts_cell_id = as.character(grts_cell_id))
+
+survey_dates %>% flextable() %>% 
+  merge_v(j = "grts_cell_id") %>% 
+  set_header_labels(.,
+                    grts_cell_id = "GRTS Cell",
+                    location_name = "Location Name") %>% 
+  theme_box() %>% 
+  bg(., bg = "grey", part = "header") %>% 
+  flextable::align(., align = "center", part = "all") %>% 
+  set_table_properties(., layout = "autofit") %>% 
+  set_caption("Survey start dates for each year for each detector location.")
 ```
 
 ***
