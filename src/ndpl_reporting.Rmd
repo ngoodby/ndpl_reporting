@@ -77,7 +77,7 @@ mobile_exclude = c('NOISE', 'NoID', 'Noise')
   library(RColorBrewer)
 ```
 
-![](../logos/BCI_logo.png){height=80} ![](../logos/CMI_logo.jpg){height=70} 
+![](../logos/BCI_logo.png){height=90}   ![](../logos/CMI_logo.jpg){height=90} 
 
 ```{r results='asis'}
 # partner name needs to match file name of the logo
@@ -164,11 +164,11 @@ spp_list <- spp_list %>% pivot_longer(., 2:length(spp_list)) %>%
   dplyr::filter(value==1)
 ```
 
-In `r this_year`, the `r partner` implemented acoustic bat monitoring protocols described in _A Plan for the North American Bat Monitoring Program (NABat)_. Stationary detectors were deployed within `r length(report_grts)` GRTS cell(s) for four consecutive nights each. Full spectrum echolocation files were recorded using the detectors in Table \@ref(tab:meta). Figure \@ref(fig:map) shows the location of each detector within the cell, and Section (Section \@ref(site-photos)) shows the habitat at each site.
+In `r this_year`, the `r partner` implemented acoustic bat monitoring protocols described in _A Plan for the North American Bat Monitoring Program (NABat)_. Stationary detectors were deployed within `r length(report_grts)` GRTS cell(s) for four consecutive nights each. Full spectrum echolocation files were recorded using the detectors in Table \@ref(tab:sitemeta). Figure \@ref(fig:map) shows the location of each detector within the cell, and Section  \@ref(stationary-site-photos) shows the habitat at each site.
 
 ```{r results = 'asis'}
 if (report_type=="mobile"){
-  cat(sprintf('Mobile acoustic surveys were conducted on %s nights in %s. Figure shows all mobile transect routes conducted. Full spectrum echolocation files were recorded using the detectors in Table', n_distinct(mobile_all_dat$recording_night), this_year))
+  cat(sprintf('Mobile acoustic surveys were conducted on %s nights in %s. Figure \\@ref(fig:mobilemap) shows all mobile transect routes conducted. Full spectrum echolocation files were recorded using the detectors in Table \\@ref(tab:mobilemeta)', n_distinct(mobile_all_dat$recording_night), this_year))
 }
 ```
 
@@ -199,7 +199,15 @@ if (all(is.na(added_species)) & all(is.na(subtracted_species))){
 
 Sonobat 4.4 was then used to manually identify files.
 
-For stationary data, we attempted to confirm the identification of a maximum of three files per species, per night, per site by visually inspecting the species ID proposed by the programs. Up to 10 files per species-site-night were reviewed in an attempt to confirm the species ID of 3 files. Review options included:
+For stationary data, we attempted to confirm the identification of a maximum of three files per species, per night, per site by visually inspecting the species ID proposed by the programs. Up to 10 files per species-site-night were reviewed in an attempt to confirm the species ID of 3 files.
+
+```{r results = 'asis'}
+if (report_type=="mobile"){
+  cat("For mobile transects, every file not scrubbed out as noise was viewed manually to confirm the species ID proposed by the programs.")
+}
+```
+
+Review options included:
 
 1. Confirming species as assigned by the programs; 
 
@@ -211,15 +219,9 @@ For stationary data, we attempted to confirm the identification of a maximum of 
 
 We reviewed files in order of confidence in identification as expressed by the programs. A confirmed identification of a species in one or more files on a given night at a given site resulted in a designation of species presence for that site-night. Identification of up to three files added an additional measure of confidence to species presence designations. When we could not assign any files recorded on a site-night to species, that species was considered “not detected.”
 
-```{r results = 'asis'}
-if (report_type=="mobile"){
-  cat("For mobile transects, every file not scrubbed out as noise was viewed manually to confirm the species ID proposed by the programs.")
-}
-```
-
 ***
 
-# __Map of Stationary Survey Locations__
+# __Map of Stationary Locations__
 
 This map shows the survey locations included in this report and the NABat cell(s) that they fall within. Hover your cursor over the map to see the NABat GRTS cell number(s) and survey location name(s).
 
@@ -241,72 +243,7 @@ map[[1]]
 
 ***
 
-```{r results = 'asis'}
-if (report_type=="mobile"){
-  cat("# __Map of Mobile Transects__")
-}
-```
-
-```{r mobilemap, fig.cap="\\label{fig:map}Map of transects"}
-if (report_type=='mobile'){
-  load(paste0(here::here(), "/data/grts.grid.rda"))
-  source(here::here("src", "mobile_route_function.R"))
-  
-  mobile_grts <- unique(mobile_all_dat$grts_cell_id)
-  mobile_transects <- list()
-  for (i in mobile_grts){
-    df <- get_mobile_route(username, password, i, project_id)
-    coords <- df[["transect"]][["coordinates"]] 
-    transect <- data.frame(matrix(unlist(coords), nrow=length(coords), byrow=TRUE)) %>% list()
-    mobile_transects <- append(mobile_transects, transect)
-  }
-  
-  all_grts <- grts.grid %>% 
-    st_as_sf() %>%
-    dplyr::filter(GRTS_ID %in% unique(mobile_all_dat$grts_cell_id)) %>% 
-    dplyr::filter(country == "US")
-  
-  detections <- mobile_all_dat %>% dplyr::select(manual_name, latitude, longitude, recording_time) %>% 
-    arrange(manual_name)
-  
-  # Create the underlying map
-  map <- leaflet(width = "80%") %>%
-      addProviderTiles("Esri.WorldTopoMap")
-  
-  # Loop over transects to include.
-  for (i in mobile_transects) {
-      map <- map %>%
-        addPolylines(data = i, lat = ~X2, lng = ~X1, weight = 3, group = "Transect Routes")
-  }
-  
-  #set up colors for species ids
-  ids <- n_distinct(detections$manual_name)
-  levels <- unique(detections$manual_name)
-  labels <- levels
-  detections$manual_name <- factor(detections$manual_name, levels = levels, labels = labels) 
-  factpal <- colorFactor(brewer.pal(ids, "Dark2"), detections$manual_name)
-  
-  #add detections and GRTS cell boundaries and print
-  map %>% 
-    addPolygons(data = all_grts, label = ~paste("NABat Cell ", GRTS_ID), fillOpacity = 0, weight = 2) %>% 
-    addCircleMarkers(data = detections, lat = ~latitude, lng = ~longitude, 
-               label = ~paste0('Manual species ID: ', `manual_name`),
-               color = ~factpal(manual_name),
-               weight = 1,
-               fillOpacity = 0.7,
-               group = 'Detections',
-               ) %>% 
-    addLegend(data = detections, pal = factpal, values = ~manual_name, opacity = 1, 
-              group = "Legend", position = 'bottomright', title = "Manual Species ID") %>% 
-    addLayersControl(
-      overlayGroups = c("Transect Routes", "Detections", "Legend"),
-      options = layersControlOptions(collapsed = FALSE)
-    ) %>% 
-    hideGroup(c("Detections", "Legend"))
-}
-```
-
-# __Site Photos__
+# __Stationary Site Photos__
 
 ```{r habitat}
 # load function to pull photos from NABat AWS webserver
@@ -393,6 +330,71 @@ if (length(cells[[1]])==0){
 }
 ```
 
+***
+```{r results = 'asis'}
+if (report_type=="mobile"){
+  cat("# __Map of Mobile Transects__")
+}
+```
+
+```{r mobilemap, fig.cap="\\label{fig:map}Map of transects"}
+if (report_type=='mobile'){
+  load(paste0(here::here(), "/data/grts.grid.rda"))
+  source(here::here("src", "mobile_route_function.R"))
+  
+  mobile_grts <- unique(mobile_all_dat$grts_cell_id)
+  mobile_transects <- list()
+  for (i in mobile_grts){
+    df <- get_mobile_route(username, password, i, project_id)
+    coords <- df[["transect"]][["coordinates"]] 
+    transect <- data.frame(matrix(unlist(coords), nrow=length(coords), byrow=TRUE)) %>% list()
+    mobile_transects <- append(mobile_transects, transect)
+  }
+  
+  all_grts <- grts.grid %>% 
+    st_as_sf() %>%
+    dplyr::filter(GRTS_ID %in% unique(mobile_all_dat$grts_cell_id)) %>% 
+    dplyr::filter(country == "US")
+  
+  detections <- mobile_all_dat %>% dplyr::select(manual_name, latitude, longitude, recording_time) %>% 
+    arrange(manual_name)
+  
+  # Create the underlying map
+  map <- leaflet(width = "80%") %>%
+      addProviderTiles("Esri.WorldTopoMap")
+  
+  # Loop over transects to include.
+  for (i in mobile_transects) {
+      map <- map %>%
+        addPolylines(data = i, lat = ~X2, lng = ~X1, weight = 3, group = "Mobile Transect Routes")
+  }
+  
+  #set up colors for species ids
+  ids <- n_distinct(detections$manual_name)
+  levels <- unique(detections$manual_name)
+  labels <- levels
+  detections$manual_name <- factor(detections$manual_name, levels = levels, labels = labels) 
+  factpal <- colorFactor(brewer.pal(ids, "Dark2"), detections$manual_name)
+  
+  #add detections and GRTS cell boundaries and print
+  map %>% 
+    addPolygons(data = all_grts, label = ~paste("NABat Cell ", GRTS_ID), fillOpacity = 0, weight = 2) %>% 
+    addCircleMarkers(data = detections, lat = ~latitude, lng = ~longitude, 
+               label = ~paste0('Manual species ID: ', `manual_name`),
+               color = ~factpal(manual_name),
+               weight = 1,
+               fillOpacity = 0.7,
+               group = 'Detections',
+               ) %>% 
+    addLegend(data = detections, pal = factpal, values = ~manual_name, opacity = 1, 
+              group = "Legend", position = 'bottomright', title = "Manual Species ID") %>% 
+    addLayersControl(
+      overlayGroups = c("Transect Routes", "Detections", "Legend"),
+      options = layersControlOptions(collapsed = FALSE)
+    ) %>% 
+    hideGroup(c("Detections", "Legend"))
+}
+```
 
 # __Potential Species__
 
@@ -550,9 +552,26 @@ species_count %>%
 ```
 ***
 
+
+
+```{r results = 'asis'}
+if (report_type=="mobile"){
+  cat("# __Mobile Acoustic Results__")
+}
+```
+
+```{r results = 'asis'}
+if (report_type=="mobile"){
+  cat("***In `r this_year`, we confirmed the presence of `r total_species_this_year` bat species (see Table \\@ref(tab:mobileresults)):***")
+}
+```
+
+```{r mobileresults}
+
 # __Mobile Survey Results
 
 ```{r mobile results}
+
 if (report_type=='mobile'){
   filtered_mobile_all_dat <- mobile_all_dat %>% 
     separate(survey_start_time, c('start_night', 'start_time'), sep='T') %>% 
@@ -571,10 +590,10 @@ if (report_type=='mobile'){
     unite('start_night', start_night:year, remove=T, sep = ", ") %>% 
     rename("Location Name"=site_name, 
            "Monitoring Night"=start_night)
-       
+
   mobile_table_this_year %>%
     flextable(col_keys = names(.)) %>% 
-    merge_v(., j="Location Name") %>% 
+    merge_v(., j="Transect Name") %>% 
     theme_box() %>%
     bg(., bg = "light blue", part = "header") %>% 
     flextable::align(., align = "center", part = "all") %>%
@@ -582,6 +601,7 @@ if (report_type=='mobile'){
     set_table_properties(., width = 1, layout = "autofit") %>% 
     colformat_num(big.mark = "") %>% 
     set_caption(paste("Species of bat, group and total number of files containing bat echolocation files recorded on mobile transects."))
+
 }
 ```
 
@@ -597,7 +617,7 @@ metadata <- all_dat %>%
  mutate(grts_cell_id = as.character(grts_cell_id))
     
 metadata %>% flextable() %>% 
-  merge_v(j = "grts_cell_id") %>% 
+  merge_v(j = c("grts_cell_id", "location_name")) %>% 
   set_header_labels(.,
                     grts_cell_id = "GRTS Cell",
                     location_name = "Location Name",
@@ -614,6 +634,35 @@ metadata %>% flextable() %>%
   colformat_char(na_str = "-")
 
 ```
+
+## Stationary Survey Dates
+
+```{r surveydates}
+survey_dates <- all_dat %>% 
+  dplyr::group_by(grts_cell_id, location_name, year) %>% 
+  dplyr::summarise(start_date = min(recording_night)) %>% 
+  mutate(start_date = ymd(start_date)) %>%
+  arrange(., grts_cell_id, location_name, year) %>% 
+  mutate(month = lubridate::month(start_date, label=T, abbr=F), day = lubridate::day(start_date)) %>% 
+  unite('start', month:day, remove = T, sep = " ") %>% 
+  pivot_wider(id_cols = c(grts_cell_id, location_name), names_from = year, values_from = start, values_fill = "-") %>% 
+  mutate(grts_cell_id = as.character(grts_cell_id))
+  
+
+survey_dates %>% flextable() %>% 
+  merge_v(j = "grts_cell_id") %>% 
+  set_header_labels(.,
+                    grts_cell_id = "GRTS Cell",
+                    location_name = "Location Name") %>% 
+  theme_box() %>% 
+  bg(., bg = "grey", part = "header") %>% 
+  flextable::align(., align = "center", part = "all") %>% 
+  set_table_properties(., layout = "autofit") %>% 
+  set_caption("Survey start dates for each year for each detector location.")
+```
+
+***
+
 
 ```{r results='asis'}
 if (report_type == 'mobile'){
@@ -648,6 +697,7 @@ if (report_type=='mobile'){
 
 ***
 
+
 ## Stationary Survey Dates
 
 ```{r surveydates}
@@ -674,6 +724,7 @@ survey_dates %>% flextable() %>%
 ```
 
 ***
+
 
 ```{r}
 sgram_list <- list.files(here::here("report_specific_sonograms"), full.names = F) 
