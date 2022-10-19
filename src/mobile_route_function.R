@@ -5,7 +5,7 @@ get_mobile_route <- function(username, password, grts_id, project_id,
                              aws_alb = NULL,
                              docker = FALSE){
   # Get headers for token
-  token = get_nabat_gql_token(username, password)
+  token = get_nabat_gql_token_edited(username, password)
   token = get_refresh_token(token)
   tkn_hdr = get_token_headers(token, branch, url, aws_gql, aws_alb, docker)
   headers = tkn_hdr$headers
