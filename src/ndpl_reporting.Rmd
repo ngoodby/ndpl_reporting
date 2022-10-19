@@ -670,7 +670,6 @@ survey_dates %>% flextable() %>%
 
 ***
 
-
 ```{r results='asis'}
 if (report_type == 'mobile'){
   cat("## Mobile Acoustic Survey Metadata")
@@ -703,34 +702,6 @@ if (report_type=='mobile'){
 ```
 
 ***
-
-## Stationary Survey Dates
-
-```{r surveydates}
-survey_dates <- all_dat %>% 
-  dplyr::group_by(grts_cell_id, location_name, year) %>% 
-  dplyr::summarise(start_date = min(recording_night)) %>% 
-  mutate(start_date = ymd(start_date)) %>%
-  arrange(., grts_cell_id, location_name, year) %>% 
-  mutate(month = lubridate::month(start_date, label=T, abbr=F), day = lubridate::day(start_date)) %>% 
-  unite('start', month:day, remove = T, sep = " ") %>% 
-  pivot_wider(id_cols = c(grts_cell_id, location_name), names_from = year, values_from = start, values_fill = "-") %>% 
-  mutate(grts_cell_id = as.character(grts_cell_id))
-
-survey_dates %>% flextable() %>% 
-  merge_v(j = "grts_cell_id") %>% 
-  set_header_labels(.,
-                    grts_cell_id = "GRTS Cell",
-                    location_name = "Location Name") %>% 
-  theme_box() %>% 
-  bg(., bg = "grey", part = "header") %>% 
-  flextable::align(., align = "center", part = "all") %>% 
-  set_table_properties(., layout = "autofit") %>% 
-  set_caption("Survey start dates for each year for each detector location.")
-```
-
-***
-
 
 ```{r}
 sgram_list <- list.files(here::here("report_specific_sonograms"), full.names = F) 
