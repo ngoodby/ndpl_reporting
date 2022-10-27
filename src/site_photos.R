@@ -98,7 +98,7 @@ get_site_photos = function(username, password, project_id, survey_id, survey_eve
       photo_url = content[["data"]][["s3FileServiceDownloadFile"]][["s3PresignedUrl"]]
       pics = append(pics, image_read(photo_url))
     }
-  }
+  } else{return(NULL)}
   return(pics)
 }
 

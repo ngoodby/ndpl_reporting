@@ -25,14 +25,14 @@ knitr::opts_chunk$set(echo = FALSE,
 
 ```{r Inputs}
 # set report type as either "stationary" or "mobile"
-report_type = "mobile"
+report_type = "stationary"
 username = 'ngoodby@batcon.org'
 password = 'pH@7GS$@3okk'
-report_grts = c("")
-project_id = 911
+report_grts = "2230"
+project_id = 963
 report_locations = c("")
 forest_id <- "BishopBLM_20220831"
-partner <- "USFS"
+partner <- "BLM"
 
 exclude <- c("LACITABR", "LANOTABR","LABLPAHE", "LABOPESU", "EUMAEUPE","EUMAIDPH", "MYCAMYYU", "MYEVMYTH", "MYLUMYVO", "EPFULANO", "Q10k", "Q15k", "Q20k", "Q25k", "Q40k", "40kMyo", "40k", "Q50k", "LACITABR,HiF", "Q25k,MYCAMYYU", "Q25k,HiF", "Q40k,Q25k", "Q40k,LoF", "MY40", "Social", "25K", "25k", "NOISE", "LowF", "HighF", "NoID", "LoF", "HiF", "Noise", "MYSP")
 
@@ -251,18 +251,20 @@ map[[1]]
 
 # __Stationary Site Photos__
 
-```{r habitat}
+```{r habitat, message=FALSE}
 # load function to pull photos from NABat AWS webserver
 source(here::here("src","site_photos.R"))
 # run function for all survey events and store outputs
 photo_queries <- sa_survey_df %>% dplyr::select(project_id, survey_id, survey_event_id) %>% distinct()
 pics=list()
 for (i in seq(1, nrow(photo_queries))){
-  proj_id = photo_queries[i,1]
-  surv_num = photo_queries[i,2]
-  surv_id = photo_queries[i,3]
-  photos_out = get_site_photos(username, password, proj_id, surv_num, surv_id)
-  pics = append(pics, list(photos_out))
+  proj_id <-  photo_queries[i,1]
+  surv_num <-  photo_queries[i,2]
+  surv_id <-  photo_queries[i,3]
+  photos_out <-  get_site_photos(username, password, proj_id, surv_num, surv_id)
+  if (!is.null(photos_out)){
+    pics <-  append(pics, list(photos_out))
+  }
 }
 ```
 

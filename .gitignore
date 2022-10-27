@@ -12,3 +12,6 @@ site_photos/
 .RHistory
 *.png
 .icloud
+logos
+logos/
+*.jpg
