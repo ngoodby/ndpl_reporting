@@ -77,13 +77,13 @@ mobile_exclude = c('NOISE', 'NoID', 'Noise')
   library(RColorBrewer)
 ```
 
-<img src="../logos/BCI_logo.png" width="auto" height="120" style="padding:15px;"/>
-<img src="../logos/CMI_logo.jpg" width="auto" height="120" style="padding:15px;"/>
+<img src="../logos/BCI_logo.png" width="auto" height="110" style="padding:10px;"/>
+<img src="../logos/CMI_logo.jpg" width="auto" height="110" style="padding:10px;"/>
 ```{r results='asis'}
 # partner name needs to match file name of the logo
 logos <- list.files(here::here("logos"), full.names = F)
 if (paste0(partner, ".png") %in% logos){
-  cat(sprintf('<img src="../logos/%s.png" width="auto" height="120" style="padding:15px;"/>', 
+  cat(sprintf('<img src="../logos/%s.png" width="auto" height="110" style="padding:10px;"/>', 
               partner))
   # cat(sprintf('![](../logos/%s)', paste0(partner, ".png")))
   # cat("{height=100}")
