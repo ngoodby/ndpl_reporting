@@ -451,7 +451,7 @@ for (i in seq(1, nrow(freqs))){
 total_species_this_year <- dat_count %>% dplyr::filter(year == this_year, pres_abs == TRUE) %>%
   group_by(year) %>% .$species_scientific %>% unique()
 
-total_species_prev_year <- dat_count %>% dplyr::filter(year == 2020, pres_abs == TRUE) %>%
+total_species_prev_year <- dat_count %>% dplyr::filter(year != this_year, pres_abs == TRUE) %>%
   group_by(year) %>% .$species_scientific %>% unique()
 
 #spp confirmed 1st time this year
@@ -460,7 +460,9 @@ sppcon <- setdiff(total_species_this_year, total_species_prev_year)
 #spp only confirmed in previous years
 sppcon2 <- setdiff(total_species_prev_year, total_species_this_year)
 
-if(length(sppcon) > 0){
+if(length(sppcon) == 1){
+  cat(paste(sppcon, collapse= ', '), "was confirmed for the first time this year.")
+  } else if (length(sppcon) >1){
   cat(paste(sppcon, collapse= ', '), "were confirmed for the first time this year.")
 } else {
   print('No new species were detected this year.')
@@ -483,7 +485,7 @@ total_species_by_year <- dat_count %>% dplyr::filter(pres_abs == TRUE) %>%
   group_by(year) %>% summarise(n = n_distinct(species))
 ```
 
-***In `r this_year`, we confirmed the presence of `r total_species_this_year` bat species (see Table \@ref(tab:speciesthisyear)):***
+<p style="font-size:16pt"> ***In `r this_year`, we confirmed the presence of `r total_species_this_year` bat species (see Table \@ref(tab:speciesthisyear)):***</p>
 
 ```{r results='asis'}
 cat("<ul>\n")
@@ -493,7 +495,7 @@ for (i in seq(1:length(report_grts))){
 cat("</ul>")
 ```
 
-***`r total_species_all_years` bat species have been confirmed over all years of monitoring (see Table \@ref(tab:speciesallyears)):***
+<p style="font-size:16pt">***`r total_species_all_years` bat species have been confirmed over all years of monitoring (see Table \@ref(tab:speciesallyears)):***</p>
 
 ```{r results='asis'}
 cat("<ul>\n")
