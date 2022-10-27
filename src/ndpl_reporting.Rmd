@@ -503,6 +503,8 @@ cat("<ul>\n")
 cat("</ul>")
 ```
 
+***
+
 ## Bat species confirmed in `r this_year`
 
 ```{r speciesthisyear}
@@ -527,6 +529,8 @@ species_table_this_year %>%
   colformat_num(big.mark = "") %>% 
 set_caption(paste("Number of files confirmed for each species and species group detected per site and night at stationary sites in ", this_year))
 ```
+
+***
 
 ## Bat species confirmed each year
 
@@ -563,8 +567,8 @@ species_count %>%
   colformat_num(big.mark = "") %>% 
   set_caption("Presence (X) or not detected (blank cell) of bat species recorded at stationary sites every year.")
 ```
-***
 
+***
 
 ```{r results = 'asis'}
 if (report_type=="mobile"){
@@ -650,6 +654,8 @@ metadata %>% flextable() %>%
 
 ```
 
+***
+
 ## Stationary Survey Dates
 
 ```{r surveydates}
@@ -675,8 +681,6 @@ survey_dates %>% flextable() %>%
   set_table_properties(., layout = "autofit") %>% 
   set_caption("Survey start dates for each year for each detector location.")
 ```
-
-***
 
 ```{r results='asis'}
 if (report_type == 'mobile'){
@@ -708,8 +712,6 @@ if (report_type=='mobile'){
     colformat_char(na_str = "-")
 }
 ```
-
-***
 
 ```{r}
 sgram_list <- list.files(here::here("report_specific_sonograms"), full.names = F) 
