@@ -77,16 +77,16 @@ mobile_exclude = c('NOISE', 'NoID', 'Noise')
   library(RColorBrewer)
 ```
 
-![](../logos/BCI_logo.png){height=90}
-
-![](../logos/CMI_logo.jpg){height=90} 
-
+<img src="../logos/BCI_logo.png" width="auto" height="120" style="padding:15px;"/>
+<img src="../logos/CMI_logo.jpg" width="auto" height="120" style="padding:15px;"/>
 ```{r results='asis'}
 # partner name needs to match file name of the logo
 logos <- list.files(here::here("logos"), full.names = F)
 if (paste0(partner, ".png") %in% logos){
-  cat(sprintf('![](../logos/%s)', paste0(partner, ".png")))
-  cat("{height=100}")
+  cat(sprintf('<img src="../logos/%s.png" width="auto" height="120" style="padding:15px;"/>', 
+              partner))
+  # cat(sprintf('![](../logos/%s)', paste0(partner, ".png")))
+  # cat("{height=100}")
 }
 ```
 
@@ -726,6 +726,7 @@ if (length(sgram_list)!=0){
 ```
 
 ```{r}
+# Put sonogram images in "report_specific sonograms" folder. Name files "species_surveySite.jpg"
 if (length(sgram_list)!=0){
   sgram_list <- list.files(here::here("report_specific_sonograms"), full.names = F) %>%
     str_split(pattern = "_", n=2, simplify=T) %>% as_tibble() %>% 
