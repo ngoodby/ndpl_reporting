@@ -134,6 +134,17 @@ if (report_type == "mobile"){
 if (report_grts == ""){
   report_grts <- unique(all_dat$grts_cell_id)
 }
+
+#determine whether call files are full spectrum, zero cross, or a mix.
+fs <- any(str_detect(all_dat$audio_recording_name, ".wav$"))
+zc <- any(str_detect(all_dat$audio_recording_name, ".zc$"))
+if (fs & !zc){
+  recording_type <- "Full spectrum"
+} else if (!fs &zc){
+  recording_type <- "Zero crossing"
+} else if (fs & zc){
+  recording_type <- "Both full spectrum and zero crossing"
+}
 ```
 
 ***
@@ -172,7 +183,7 @@ spp_list <- spp_list %>% pivot_longer(., 2:length(spp_list)) %>%
   dplyr::filter(value==1)
 ```
 
-In `r this_year`, the `r partner` implemented acoustic bat monitoring protocols described in _A Plan for the North American Bat Monitoring Program (NABat)_. Stationary detectors were deployed within `r length(report_grts)` GRTS cell(s) for four consecutive nights each. Full spectrum echolocation files were recorded using the detectors in Table \@ref(tab:sitemeta). Figure \@ref(fig:map) shows the location of each detector within the cell, and Section  \@ref(stationary-site-photos) shows the habitat at each site.
+In `r this_year`, the `r partner` implemented acoustic bat monitoring protocols described in _A Plan for the North American Bat Monitoring Program (NABat)_. Stationary detectors were deployed within `r length(report_grts)` GRTS cell(s) for four consecutive nights each. `r recording_type` echolocation files were recorded using the detectors in Table \@ref(tab:sitemeta). Figure \@ref(fig:map) shows the location of each detector within the cell, and Section  \@ref(stationary-site-photos) shows the habitat at each site.
 
 ```{r results = 'asis'}
 if (report_type=="mobile"){
