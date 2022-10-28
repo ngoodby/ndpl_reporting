@@ -98,6 +98,7 @@ data <- load_nabat_data(username, password, project_id, report_grts, report_loca
 all_dat <- data[[1]]
 dat_count <- data[[2]]
 sa_survey_df <- data[[3]]
+project_df <- data[[4]]
 this_year = max(all_dat$year)
 
 #mobile
@@ -462,6 +463,13 @@ for (i in seq(1, nrow(freqs))){
 
 # __Stationary Acoustic Results__
 
+```{r}
+#Create link to NABat project to reference below.
+proj_link <- sprintf("https://sciencebase.usgs.gov/nabat/#/projects/%s", project_df$project_id[1])
+```
+
+Acoustic results were uploaded to NABat project `r project_df$project_name[1]` and can be viewed [here](proj_link)
+
 ```{r results="asis"}
 total_species_this_year <- dat_count %>% dplyr::filter(year == this_year, pres_abs == TRUE) %>%
   group_by(year) %>% .$species_scientific %>% unique()
@@ -772,6 +780,10 @@ if (length(sgram_list)!=0){
 # __Learn More__
 
 To learn more about bats and to support their conservation visit [batcon.org](https://www.batcon.org/).\n
+```{r}
+
+```
+
 
 ![](../logos/NABat_logo.png){height="200"}
 
