@@ -463,13 +463,6 @@ for (i in seq(1, nrow(freqs))){
 
 # __Stationary Acoustic Results__
 
-```{r}
-#Create link to NABat project to reference below.
-proj_link <- sprintf("https://sciencebase.usgs.gov/nabat/#/projects/%s", project_df$project_id[1])
-```
-
-Acoustic results were uploaded to NABat project `r project_df$project_name[1]` and can be viewed [here](proj_link)
-
 ```{r results="asis"}
 total_species_this_year <- dat_count %>% dplyr::filter(year == this_year, pres_abs == TRUE) %>%
   group_by(year) %>% .$species_scientific %>% unique()
@@ -779,11 +772,13 @@ if (length(sgram_list)!=0){
 
 # __Learn More__
 
-To learn more about bats and to support their conservation visit [batcon.org](https://www.batcon.org/).\n
 ```{r}
-
+#Create link to NABat project to reference below.
+proj_link <- sprintf("[here](https://sciencebase.usgs.gov/nabat/#/projects/%s)", project_df$project_id[1])
 ```
 
+All acoustic results were uploaded to NABat project `r project_df$project_name[1]` and can be viewed `r proj_link`. *Note that you need to have a NABat account and be a member of the project to be able to view the results on NABat.*
+
+To learn more about bats and to support their conservation visit [batcon.org](https://www.batcon.org/).\n
 
 ![](../logos/NABat_logo.png){height="200"}
-
