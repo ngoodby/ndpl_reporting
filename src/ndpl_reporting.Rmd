@@ -104,6 +104,7 @@ data <- load_nabat_data(username, password, project_id, report_grts, report_loca
 all_dat <- data[[1]]
 dat_count <- data[[2]]
 sa_survey_df <- data[[3]]
+project_df <- data[[4]]
 this_year = max(all_dat$year)
 
 #mobile
@@ -140,6 +141,17 @@ if (report_type == "mobile"){
 if (report_grts == ""){
   report_grts <- unique(all_dat$grts_cell_id)
 }
+
+#determine whether call files are full spectrum, zero cross, or a mix.
+fs <- any(str_detect(all_dat$audio_recording_name, ".wav$"))
+zc <- any(str_detect(all_dat$audio_recording_name, ".zc$"))
+if (fs & !zc){
+  recording_type <- "Full spectrum"
+} else if (!fs &zc){
+  recording_type <- "Zero crossing"
+} else if (fs & zc){
+  recording_type <- "Both full spectrum and zero crossing"
+}
 ```
 
 ***
@@ -168,15 +180,19 @@ spp_list <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/1U
   dplyr::filter(Classifier == classifier) #filter to the classifier of interest 
 
 #add species to the classifier
-extra <- data.frame(matrix(data = 1, nrow = nrow(spp_list), ncol = length(subtracted_species$value)))
-colnames(extra) <- unlist(subtracted_species$value)
-spp_list <- dplyr::bind_cols(spp_list, extra)
+if (!all(is.na(added_species))){
+  extra <- data.frame(matrix(data = 1, nrow = nrow(spp_list), ncol = length(added_species$value)))
+  colnames(extra) <- unlist(added_species$value)
+  spp_list <- dplyr::bind_cols(spp_list, extra)
+}
 
 spp_list <- spp_list %>% pivot_longer(., 2:length(spp_list)) %>% 
   dplyr::filter(value==1)
 ```
 
+
 In `r this_year`, the `r report_reference` implemented acoustic bat monitoring protocols described in _A Plan for the North American Bat Monitoring Program (NABat)_. Stationary detectors were deployed within `r length(report_grts)` GRTS cell(s) for four consecutive nights each. Full spectrum echolocation calls were recorded using the detectors in Table \@ref(tab:sitemeta). Figure \@ref(fig:map) shows the location of each detector within the cell, and Section  \@ref(stationary-site-photos) shows the habitat at each site.
+
 
 ```{r results = 'asis'}
 if (report_type=="mobile"){
@@ -427,9 +443,9 @@ available_sgrams <- list.files(here::here("sonograms"), full.names = F) %>% str_
 freqs <- species_reference_table %>% dplyr::filter(species_scientific %in% spp_list$name) %>%
   arrange(species_scientific) %>% 
   mutate(species_scientific = case_when(
-    !is.na(species_url) & (species_scientific %in% sgcn) ~ sprintf("%s (SGCN in %s)", species_scientific, kpro_region),
+    !is.na(species_url) & (species_scientific %in% sgcn) ~ sprintf("<em>%s</em> (SGCN in %s)", species_scientific, kpro_region),
     # T ~ paste0("*", species_scientific, "*")
-    T ~ species_scientific
+    T ~ sprintf("<em>%s</em>", species_scientific)
   )) %>% 
   dplyr::select(species_scientific, species_url, common_name, freq_range, species_code)
 ```
@@ -438,8 +454,10 @@ freqs <- species_reference_table %>% dplyr::filter(species_scientific %in% spp_l
 # print photos under expandable labels
 for (i in seq(1, nrow(freqs))){
   cat("<details>\n")
-  cat(sprintf('<summary>\n<p><a href="%s" target="_blank">%s</a> - %s kHz</p>\n</summary>\n', 
-              freqs[i,]$species_url, freqs[i,]$species_scientific, freqs[i,]$freq_range))
+  cat(sprintf('<summary>\n%s - <a href="%s" target="_blank">%s kHz</a>\n</summary>\n', 
+            freqs[i,]$species_scientific, freqs[i,]$species_url, freqs[i,]$freq_range))
+  # cat(sprintf('<summary>\n<a href="%s" target="_blank">%s</a> - %s kHz\n</summary>\n', 
+  #             freqs[i,]$species_url, freqs[i,]$species_scientific, freqs[i,]$freq_range))
   if (freqs[i,]$species_code %in% available_sgrams){
     cat(sprintf("![](../sonograms/%s_sgram.png)\n", freqs[i,]$species_code))
     } else {
@@ -513,6 +531,34 @@ if(length(sppcon) == 1){
 } else {
   print('No new species were detected this year.')
 }
+```
+
+
+***
+
+## Bat species confirmed in `r this_year`
+
+```{r speciesthisyear, ft.align="left"}
+species_table_this_year <- all_dat %>% 
+  group_by(grts_cell_id, location_name, recording_night, species_code) %>% 
+  summarise(num_confirmed_files = n()) %>% 
+  arrange(., species_code) %>% 
+  pivot_wider(names_from = species_code, 
+              values_from = num_confirmed_files,
+              values_fill = ) %>% 
+  arrange(., grts_cell_id, location_name, recording_night) %>%
+  rename("GRTS Cell" = grts_cell_id, "Location Name"=location_name, "Monitoring Night"=recording_night)
+     
+species_table_this_year %>%
+  flextable(col_keys = names(.)) %>% 
+  merge_v(., j=c("Location Name", "GRTS Cell")) %>% 
+  theme_box() %>%
+  bg(., bg = "light blue", part = "header") %>% 
+  flextable::align(., align = "center", part = "all") %>%
+  bold(., j = 1, bold = TRUE) %>% 
+  set_table_properties(., width = 1, layout = "autofit") %>% 
+  colformat_num(big.mark = "") %>% 
+set_caption(paste("Number of files confirmed for each species and species group detected per site and night at stationary sites in ", this_year))
 ```
 
 
@@ -770,7 +816,13 @@ if (length(sgram_list)!=0){
 
 # __Learn More__
 
+```{r}
+#Create link to NABat project to reference below.
+proj_link <- sprintf("[here](https://sciencebase.usgs.gov/nabat/#/projects/%s)", project_df$project_id[1])
+```
+
+All acoustic results were uploaded to NABat project `r project_df$project_name[1]` and can be viewed `r proj_link`. *Note that you need to have a NABat account and be a member of the project to be able to view the results on NABat.*
+
 To learn more about bats and to support their conservation visit [batcon.org](https://www.batcon.org/).\n
 
-![](../logos/NABat_logo.png){height="200"}
-
+[![](../logos/NABat_logo.png){height="200"}](https://sciencebase.usgs.gov/nabat/#/results)

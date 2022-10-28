@@ -1,4 +1,4 @@
-load_nabat_data <- function(username, password, project_id, report_grts, report_locations, exclude){
+load_nabat_data <- function(username, password, proj_id, report_grts, report_locations, exclude){
   #' @title Load stationary acoustic NABat Data
   #'
   #' @description Load and clean stationary acoustic NABat survey data
@@ -7,11 +7,12 @@ load_nabat_data <- function(username, password, project_id, report_grts, report_
   token = get_nabat_gql_token_edited(username, password)
   token = get_refresh_token(token)
   project_df = get_projects(token)
+  project_df <- project_df %>% filter(project_id %in% proj_id)
   token = get_refresh_token(token)
   sa_survey_df = get_sa_project_summary(token,
                                         project_df,
-                                        project_id[1])
-  additional_projects <- project_id[-1]
+                                        proj_id[1])
+  additional_projects <- proj_id[-1]
   if (length(additional_projects > 0)){
     for (i in additional_projects){
       sa_survey_df_add = get_sa_project_summary(token,
@@ -54,5 +55,5 @@ load_nabat_data <- function(username, password, project_id, report_grts, report_
       value > 0 ~ TRUE)) %>%
     dplyr::rename(species = name) %>%
     dplyr::select(-value)
-  return(list(all_dat, dat_count, sa_survey_df))
+  return(list(all_dat, dat_count, sa_survey_df, project_df))
 }
