@@ -1,5 +1,6 @@
 ---
 title: "__NABat Acoustic Survey Results__"
+subtitle: "_National Data Processing Lab_"
 date: "Report produced `r format(Sys.time(), '%d %B, %Y')`"
 output:
   bookdown::html_document2:
@@ -33,6 +34,7 @@ project_id = 963
 report_locations = c("")
 forest_id <- "BishopBLM_20220831"
 partner <- "BLM"
+report_reference <- "Bishop BLM"
 
 exclude <- c("LACITABR", "LANOTABR","LABLPAHE", "LABOPESU", "EUMAEUPE","EUMAIDPH", "MYCAMYYU", "MYEVMYTH", "MYLUMYVO", "EPFULANO", "Q10k", "Q15k", "Q20k", "Q25k", "Q40k", "40kMyo", "40k", "Q50k", "LACITABR,HiF", "Q25k,MYCAMYYU", "Q25k,HiF", "Q40k,Q25k", "Q40k,LoF", "MY40", "Social", "25K", "25k", "NOISE", "LowF", "HighF", "NoID", "LoF", "HiF", "Noise", "MYSP")
 
@@ -79,11 +81,12 @@ mobile_exclude = c('NOISE', 'NoID', 'Noise')
 
 <img src="../logos/BCI_logo.png" width="auto" height="110" style="padding:10px;"/>
 <img src="../logos/CMI_logo.jpg" width="auto" height="110" style="padding:10px;"/>
+
 ```{r results='asis'}
 # partner name needs to match file name of the logo
 logos <- list.files(here::here("logos"), full.names = F)
 if (paste0(partner, ".png") %in% logos){
-  cat(sprintf('<img src="../logos/%s.png" width="auto" height="110" style="padding:10px;"/>', 
+  cat(sprintf('<img src="../logos/%s.png" title= "Report prepared for:" width="auto" height="110" style="padding:10px;"/>', 
               partner))
   # cat(sprintf('![](../logos/%s)', paste0(partner, ".png")))
   # cat("{height=100}")
@@ -170,7 +173,7 @@ spp_list <- spp_list %>% pivot_longer(., 2:length(spp_list)) %>%
   dplyr::filter(value==1)
 ```
 
-In `r this_year`, the `r partner` implemented acoustic bat monitoring protocols described in _A Plan for the North American Bat Monitoring Program (NABat)_. Stationary detectors were deployed within `r length(report_grts)` GRTS cell(s) for four consecutive nights each. Full spectrum echolocation files were recorded using the detectors in Table \@ref(tab:sitemeta). Figure \@ref(fig:map) shows the location of each detector within the cell, and Section  \@ref(stationary-site-photos) shows the habitat at each site.
+In `r this_year`, the `r report_reference` implemented acoustic bat monitoring protocols described in _A Plan for the North American Bat Monitoring Program (NABat)_. Stationary detectors were deployed within `r length(report_grts)` GRTS cell(s) for four consecutive nights each. Full spectrum echolocation calls were recorded using the detectors in Table \@ref(tab:sitemeta). Figure \@ref(fig:map) shows the location of each detector within the cell, and Section  \@ref(stationary-site-photos) shows the habitat at each site.
 
 ```{r results = 'asis'}
 if (report_type=="mobile"){
@@ -178,7 +181,7 @@ if (report_type=="mobile"){
 }
 ```
 
-The resulting recording files were sent to Bat Conservation International (BCI) for identification of species presence. Data was checked, renamed, and attributed using a custom R and Python code developed by Conservation Metrics Inc (CMI) and the United States Geological Survey (USGS). Files were then scrubbed of noise using Sonobat Data Wizard 4.4. Sonobatch was used in Sonobat 4.4 set to the `r classifier` to determine call parameters and the suggested species identification. Files were then run through Kaleidoscope Pro 5.3.9, set to the `r kpro_region` region, to provide additional automated identification used in manual vetting. 
+The resulting recording files were sent to the National Data Processing Lab (NDPL) for processing Data was checked, renamed, and attributed using a custom R and Python code developed by Conservation Metrics Inc (CMI) and the United States Geological Survey (USGS). Files were then scrubbed of noise using Sonobat Data Wizard 4.4. Sonobatch was used in Sonobat 4.4 set to the `r classifier` classifier region (Section  \@ref(speciesfrequencytable)) to determine call parameters and the suggested species identification. Files were then run through Kaleidoscope Pro 5.3.9, set to the `r kpro_region` region, to provide additional automated identification used in manual vetting. 
 
 ```{r results = 'asis'}
 #print added and subtracted species depending on whether any were add/removed or not
@@ -408,7 +411,7 @@ if (report_type=='mobile'){
 
 Species that may occur in surveyed area of the `r partner` and their characteristic frequncy range. Click on the arrows to view an example sonogrgam for each species. Click on the links to learn more about that species.
 
-```{r species frequency table}
+```{r speciesfrequencytable}
 #bring in data on which species are SGCN in the state specified by the K-Pro region
 sgcn <- read_csv(here::here('data', 'sgcn_final_data.csv')) %>% dplyr::select(-1) %>% 
   dplyr::filter(states_2015 == kpro_region) %>% 
@@ -507,33 +510,6 @@ cat("</ul>")
 
 ***
 
-## Bat species confirmed in `r this_year`
-
-```{r speciesthisyear}
-species_table_this_year <- all_dat %>% 
-  group_by(grts_cell_id, location_name, recording_night, species_code) %>% 
-  summarise(num_confirmed_files = n()) %>% 
-  arrange(., species_code) %>% 
-  pivot_wider(names_from = species_code, 
-              values_from = num_confirmed_files,
-              values_fill = ) %>% 
-  arrange(., grts_cell_id, location_name, recording_night) %>%
-  rename("GRTS Cell" = grts_cell_id, "Location Name"=location_name, "Monitoring Night"=recording_night)
-     
-species_table_this_year %>%
-  flextable(col_keys = names(.)) %>% 
-  merge_v(., j=c("Location Name", "GRTS Cell")) %>% 
-  theme_box() %>%
-  bg(., bg = "light blue", part = "header") %>% 
-  flextable::align(., align = "center", part = "all") %>%
-  bold(., j = 1, bold = TRUE) %>% 
-  set_table_properties(., width = 1, layout = "autofit") %>% 
-  colformat_num(big.mark = "") %>% 
-set_caption(paste("Number of files confirmed for each species and species group detected per site and night at stationary sites in ", this_year))
-```
-
-***
-
 ## Bat species confirmed each year
 
 ```{r speciesallyears}
@@ -569,6 +545,36 @@ species_count %>%
   colformat_num(big.mark = "") %>% 
   set_caption("Presence (X) or not detected (blank cell) of bat species recorded at stationary sites every year.")
 ```
+
+***
+
+## Bat species confirmed in `r this_year`
+
+```{r speciesthisyear}
+species_table_this_year <- all_dat %>% 
+  group_by(grts_cell_id, location_name, recording_night, species_code) %>% 
+  summarise(num_confirmed_files = n()) %>% 
+  arrange(., species_code) %>% 
+  pivot_wider(names_from = species_code, 
+              values_from = num_confirmed_files,
+              values_fill = ) %>% 
+  arrange(., grts_cell_id, location_name, recording_night) %>%
+  rename("GRTS Cell" = grts_cell_id, "Location Name"=location_name, "Monitoring Night"=recording_night)
+     
+species_table_this_year %>%
+  flextable(col_keys = names(.)) %>% 
+  merge_v(., j=c("Location Name", "GRTS Cell")) %>% 
+  theme_box() %>%
+  bg(., bg = "light blue", part = "header") %>% 
+  flextable::align(., align = "center", part = "all") %>%
+  bold(., j = 1, bold = TRUE) %>% 
+  set_table_properties(., width = 1, layout = "autofit") %>% 
+  colformat_num(big.mark = "") %>% 
+set_caption(paste("Number of files confirmed for each species and species group detected per site and night at stationary sites in ", this_year))
+```
+
+
+
 
 ***
 
