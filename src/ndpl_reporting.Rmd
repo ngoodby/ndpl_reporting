@@ -466,14 +466,18 @@ sppcon <- setdiff(total_species_this_year, total_species_prev_year)
 #spp only confirmed in previous years
 sppcon2 <- setdiff(total_species_prev_year, total_species_this_year)
 
-if(length(sppcon) == 1){
-  cat(paste(sppcon, collapse= ', '), "was confirmed for the first time this year.")
-  } else if (length(sppcon) >1){
-  cat(paste(sppcon, collapse= ', '), "were confirmed for the first time this year.")
-} else {
-  print('No new species were detected this year.')
-}
 ```
+
+<p style="font-size:16pt">***`r total_species_all_years` bat species have been confirmed over all years of monitoring (see Table \@ref(tab:speciesallyears)):***</p>
+
+```{r results='asis'}
+cat("<ul>\n")
+  for (i in seq(1:nrow(total_species_by_year))){
+    cat(sprintf("<li> %g species in %g </li> \n", total_species_by_year[i,]$n, total_species_by_year[i,]$year))
+  }
+cat("</ul>")
+```
+
 
 ```{r}
 total_species_this_year <- dat_count %>% dplyr::filter(year == this_year, pres_abs == TRUE) %>%
@@ -501,15 +505,16 @@ for (i in seq(1:length(report_grts))){
 cat("</ul>")
 ```
 
-<p style="font-size:16pt">***`r total_species_all_years` bat species have been confirmed over all years of monitoring (see Table \@ref(tab:speciesallyears)):***</p>
-
-```{r results='asis'}
-cat("<ul>\n")
-  for (i in seq(1:nrow(total_species_by_year))){
-    cat(sprintf("<li> %g species in %g </li> \n", total_species_by_year[i,]$n, total_species_by_year[i,]$year))
-  }
-cat("</ul>")
+```{r species confirmed for the first time this year}
+if(length(sppcon) == 1){
+  cat(paste(sppcon, collapse= ', '), "was confirmed for the first time this year.")
+  } else if (length(sppcon) >1){
+  cat(paste(sppcon, collapse= ', '), "were confirmed for the first time this year.")
+} else {
+  print('No new species were detected this year.')
+}
 ```
+
 
 ***
 
@@ -543,8 +548,8 @@ species_count %>%
   bg(., bg = "light gray", part = "header", i=1, j=c(2:length(table_names[,1]))) %>% 
   bg(., bg = "light blue", part = "header", i=2) %>% 
   bold(., bold = TRUE, part = "body") %>% 
-  flextable::align(., align = "center", part = "all") %>%
-  set_table_properties(., width = 1, layout = "autofit") %>%
+   flextable::align(., align = "center", part = "all") %>%
+     set_table_properties(., width = 1, layout = "autofit") %>%
   colformat_num(big.mark = "") %>% 
   set_caption("Presence (X) or not detected (blank cell) of bat species recorded at stationary sites every year.")
 ```
