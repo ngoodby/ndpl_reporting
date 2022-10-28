@@ -162,9 +162,11 @@ spp_list <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/1U
   dplyr::filter(Classifier == classifier) #filter to the classifier of interest 
 
 #add species to the classifier
-extra <- data.frame(matrix(data = 1, nrow = nrow(spp_list), ncol = length(subtracted_species$value)))
-colnames(extra) <- unlist(subtracted_species$value)
-spp_list <- dplyr::bind_cols(spp_list, extra)
+if (!all(is.na(added_species))){
+  extra <- data.frame(matrix(data = 1, nrow = nrow(spp_list), ncol = length(added_species$value)))
+  colnames(extra) <- unlist(added_species$value)
+  spp_list <- dplyr::bind_cols(spp_list, extra)
+}
 
 spp_list <- spp_list %>% pivot_longer(., 2:length(spp_list)) %>% 
   dplyr::filter(value==1)
@@ -509,7 +511,7 @@ cat("</ul>")
 
 ## Bat species confirmed in `r this_year`
 
-```{r speciesthisyear}
+```{r speciesthisyear, ft.align="left"}
 species_table_this_year <- all_dat %>% 
   group_by(grts_cell_id, location_name, recording_night, species_code) %>% 
   summarise(num_confirmed_files = n()) %>% 
@@ -536,7 +538,7 @@ set_caption(paste("Number of files confirmed for each species and species group 
 
 ## Bat species confirmed each year
 
-```{r speciesallyears}
+```{r speciesallyears, ft.align="left"}
 sub_x <- function(x){
   if_else(x==TRUE, "X","")
 }
@@ -630,7 +632,7 @@ if (report_type=='mobile'){
 
 ## Stationary Acoustic Survey Metadata
 
-```{r sitemeta}
+```{r sitemeta, ft.align="left"}
 metadata <- all_dat %>% 
   dplyr::filter(year == this_year) %>% 
   dplyr::group_by(grts_cell_id, location_name, detector_model, detector_serial_number, mic_type) %>% 
@@ -660,7 +662,7 @@ metadata %>% flextable() %>%
 
 ## Stationary Survey Dates
 
-```{r surveydates}
+```{r surveydates, ft.align="left"}
 survey_dates <- all_dat %>% 
   dplyr::group_by(grts_cell_id, location_name, year) %>% 
   dplyr::summarise(start_date = min(recording_night)) %>% 
