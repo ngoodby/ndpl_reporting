@@ -486,15 +486,7 @@ sppcon2 <- setdiff(total_species_prev_year, total_species_this_year)
 
 ```
 
-<p style="font-size:16pt">***`r total_species_all_years` bat species have been confirmed over all years of monitoring (see Table \@ref(tab:speciesallyears)):***</p>
 
-```{r results='asis'}
-cat("<ul>\n")
-  for (i in seq(1:nrow(total_species_by_year))){
-    cat(sprintf("<li> %g species in %g </li> \n", total_species_by_year[i,]$n, total_species_by_year[i,]$year))
-  }
-cat("</ul>")
-```
 
 
 ```{r}
@@ -511,6 +503,16 @@ total_species_by_grts_this_year <- dat_count %>% dplyr::filter(year == this_year
 
 total_species_by_year <- dat_count %>% dplyr::filter(pres_abs == TRUE) %>%
   group_by(year) %>% summarise(n = n_distinct(species))
+```
+
+<p style="font-size:16pt">***`r total_species_all_years` bat species have been confirmed over all years of monitoring (see Table \@ref(tab:speciesallyears)):***</p>
+
+```{r results='asis'}
+cat("<ul>\n")
+  for (i in seq(1:nrow(total_species_by_year))){
+    cat(sprintf("<li> %g species in %g </li> \n", total_species_by_year[i,]$n, total_species_by_year[i,]$year))
+  }
+cat("</ul>")
 ```
 
 <p style="font-size:16pt"> ***In `r this_year`, we confirmed the presence of `r total_species_this_year` bat species (see Table \@ref(tab:speciesthisyear)):***</p>
@@ -821,7 +823,7 @@ if (length(sgram_list)!=0){
 proj_link <- sprintf("[here](https://sciencebase.usgs.gov/nabat/#/projects/%s)", project_df$project_id[1])
 ```
 
-All acoustic results were uploaded to NABat project `r project_df$project_name[1]` and can be viewed `r proj_link`. *Note that you need to have a NABat account and be a member of the project to be able to view the results on NABat.*
+All acoustic results were uploaded to NABat project `r project_df$project_name[1]` and can be viewed `r proj_link`. *Note that you need to have a NABat account and be a member of the project to be able to view the results on NABat. If you would like to view these results on NABat and don't have an account, please contact us.*
 
 To learn more about bats and to support their conservation visit [batcon.org](https://www.batcon.org/).\n
 
