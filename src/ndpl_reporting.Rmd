@@ -228,7 +228,7 @@ if (all(is.na(added_species)) & all(is.na(subtracted_species))){
 
 Sonobat 4.4 was then used to manually identify files.
 
-For stationary data, we attempted to confirm the identification of one to three acoustic files per species, per night, per site by visually inspecting the species ID proposed by the programs. Up to ten files per species-site-night were reviewed in an attempt to confirm the species ID of at least one file.
+For stationary data, we attempted to confirm the identification of at least one acoustic file per species, per night, per site by visually inspecting the species ID proposed by the programs. Up to ten files per species-site-night were reviewed in an attempt to confirm the species ID.
 
 ```{r results = 'asis'}
 if (report_type=="mobile"){
@@ -238,7 +238,7 @@ if (report_type=="mobile"){
 
 Review options included:
 
-1. Confirming species as assigned by the programs; 
+1. Confirming species ID as assigned by the programs; 
 
 2. Assigning the file to a species couplet, or frequency category based on the frequency and call shape (Section \@ref(potential-species)); 
 
@@ -246,7 +246,7 @@ Review options included:
 
 4. Assigning the file as noise, i.e., not a recording of bat echolocation calls. 
 
-We reviewed files in order of confidence in identification as expressed by the programs. A confirmed identification of a species in one or more files on a given night at a given site resulted in a designation of species presence for that site-night. Identification of up to three files added an additional measure of confidence to species presence designations. When we could not assign any files recorded on a site-night to species, that species was considered “not detected.”
+We reviewed files in order of confidence in identification as expressed by the programs. A confirmed identification of a species in one or more files on a given night at a given site resulted in a designation of species presence for that site-night. When we could not assign any files recorded on a site-night to species, that species was considered “not detected.”
 
 ***
 
@@ -526,7 +526,7 @@ for (i in seq(1:length(report_grts))){
 cat("</ul>")
 ```
 
-```{r species confirmed for the first time this year}
+```{r species confirmed for the first time this year, results='asis'}
 if(length(sppcon) == 1){
   cat(paste(sppcon, collapse= ', '), "was confirmed for the first time this year.")
   } else if (length(sppcon) >1){
@@ -586,6 +586,7 @@ species_count %>%
 
 ```{r speciesthisyear, ft.align="left"}
 species_table_this_year <- all_dat %>% 
+  filter(year == this_year) %>% 
   group_by(grts_cell_id, location_name, recording_night, species_code) %>% 
   summarise(num_confirmed_files = n()) %>% 
   arrange(., species_code) %>% 
