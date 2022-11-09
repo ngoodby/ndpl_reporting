@@ -29,7 +29,7 @@ knitr::opts_chunk$set(echo = FALSE,
 report_type = "stationary"
 username = 'clong@batcon.org'
 password = 'Myotisciliolabrum@9721'
-report_grts = c("")
+report_grts = c("7590", "10662", "18854", "51622")
 project_id = 1114
 report_locations = c("")
 forest_id <- "NVDOE_20220831"
@@ -137,10 +137,10 @@ if (report_type == "mobile"){
     left_join(detector_codes, by = c("detector_type_id"="id")) %>% 
     left_join(mic_codes, by = c("microphone_type_id"="id"))
 }
-
-if (report_grts == ""){
-  report_grts <- unique(all_dat$grts_cell_id)
-}
+# 
+# if (report_grts == ""){
+#   report_grts <- unique(all_dat$grts_cell_id)
+# }
 
 #determine whether call files are full spectrum, zero cross, or a mix.
 fs <- any(str_detect(all_dat$audio_recording_name, ".wav$"))
@@ -176,7 +176,7 @@ spp_list <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/1U
   unnest(keyword) %>% dplyr::select(-Species_List) %>%
   group_by(Classifier, keyword) %>% summarise(value = n()) %>%
   pivot_wider(names_from = keyword, values_from = value, values_fill = 0) %>%
-  dplyr::select(-any_of(subtracted_species$value)) %>% #remove species from the classifier
+  # dplyr::select(-any_of(subtracted_species$value)) %>% #remove species from the classifier
   dplyr::filter(Classifier == classifier) #filter to the classifier of interest
 
 #add species to the classifier
