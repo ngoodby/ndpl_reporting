@@ -29,12 +29,12 @@ knitr::opts_chunk$set(echo = FALSE,
 report_type = "stationary"
 username = 'clong@batcon.org'
 password = 'Myotisciliolabrum@9721'
-report_grts = "2230"
-project_id = 963
+report_grts = c("")
+project_id = 1114
 report_locations = c("")
-forest_id <- "BishopBLM_20220831"
-partner <- "BLM"
-report_reference <- "Bishop BLM"
+forest_id <- "NVDOE_20220831"
+partner <- ""
+report_reference <- "Nevada Department of Energy"
 
 exclude <- c("LACITABR", "LANOTABR","LABLPAHE", "LABOPESU", "EUMAEUPE","EUMAIDPH", "MYCAMYYU", "MYEVMYTH", "MYLUMYVO", "EPFULANO", "Q10k", "Q15k", "Q20k", "Q25k", "Q40k", "40kMyo", "40k", "Q50k", "LACITABR,HiF", "Q25k,MYCAMYYU", "Q25k,HiF", "Q40k,Q25k", "Q40k,LoF", "MY40", "Social", "25K", "25k", "NOISE", "LowF", "HighF", "NoID", "LoF", "HiF", "Noise", "MYSP")
 
@@ -172,12 +172,12 @@ subtracted_species <- lookup_t %>% filter(data_id==forest_id) %>% pull(Kal_subtr
 ```
 
 ```{r}
-spp_list <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/1UggTTGxYYmVM2FVpjHqn-q0AZLb-oqGKlJytg7r5JXg/edit?usp=sharing', sheet = "SB_Species_List") %>% mutate(keyword = str_split(Species_List, ",")) %>% 
-  unnest(keyword) %>% dplyr::select(-Species_List) %>% 
-  group_by(Classifier, keyword) %>% summarise(value = n()) %>% 
-  pivot_wider(names_from = keyword, values_from = value, values_fill = 0) %>% 
+spp_list <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/1UggTTGxYYmVM2FVpjHqn-q0AZLb-oqGKlJytg7r5JXg/edit?usp=sharing', sheet = "SB_Species_List") %>% mutate(keyword = str_split(Species_List, ",")) %>%
+  unnest(keyword) %>% dplyr::select(-Species_List) %>%
+  group_by(Classifier, keyword) %>% summarise(value = n()) %>%
+  pivot_wider(names_from = keyword, values_from = value, values_fill = 0) %>%
   dplyr::select(-any_of(subtracted_species$value)) %>% #remove species from the classifier
-  dplyr::filter(Classifier == classifier) #filter to the classifier of interest 
+  dplyr::filter(Classifier == classifier) #filter to the classifier of interest
 
 #add species to the classifier
 if (!all(is.na(added_species))){
@@ -186,7 +186,7 @@ if (!all(is.na(added_species))){
   spp_list <- dplyr::bind_cols(spp_list, extra)
 }
 
-spp_list <- spp_list %>% pivot_longer(., 2:length(spp_list)) %>% 
+spp_list <- spp_list %>% pivot_longer(., 2:length(spp_list)) %>%
   dplyr::filter(value==1) %>% left_join(., species_reference_table, by=c("name"="species_code_6"))
 
 ```
@@ -440,15 +440,16 @@ freqs <- species_reference_table %>% dplyr::filter(species_scientific %in% spp_l
     # T ~ paste0("*", species_scientific, "*")
     T ~ sprintf("<em>%s</em>", species_scientific)
   )) %>% 
-  dplyr::select(species_scientific, species_code, species_url, common_name, freq_range)
+  dplyr::select(species_code, species_scientific, species_url, common_name, freq_range)
 ```
 
 ```{r, results='asis', eval=TRUE}
 # print photos under expandable labels
 for (i in seq(1, nrow(freqs))){
   cat("<details>\n")
-  cat(sprintf('<summary>\n%s - <a href="%s" target="_blank">%s kHz</a>\n</summary>\n', 
-            freqs[i,]$species_scientific, freqs[i,]$species_code, freqs[i,]$species_url, freqs[i,]$freq_range))
+  cat(sprintf('<summary>\n%s - %s: <a href="%s" target="_blank">%s kHz</a>\n</summary>\n',        
+             freqs[i,]$species_scientific, freqs[i,]$species_code, freqs[i,]$species_url, 
+              freqs[i,]$freq_range))
   # cat(sprintf('<summary>\n<a href="%s" target="_blank">%s</a> - %s kHz\n</summary>\n', 
   #             freqs[i,]$species_url, freqs[i,]$species_scientific, freqs[i,]$freq_range))
   if (freqs[i,]$species_code %in% available_sgrams){
@@ -473,7 +474,7 @@ total_species_prev_year <- dat_count %>% dplyr::filter(year != this_year, pres_a
 
 #spp confirmed 1st time this year
 sppcon <- setdiff(total_species_this_year, total_species_prev_year)
-
+  
 
 #spp only confirmed in previous years
 sppcon2 <- setdiff(total_species_prev_year, total_species_this_year)
@@ -521,9 +522,10 @@ cat("</ul>")
 
 ```{r species confirmed for the first time this year, results='asis'}
 if(length(sppcon) == 1){
-  cat(paste(sppcon, collapse= ', '), "was confirmed for the first time this year.")
+  cat(sprintf("<em>%s</em> was confirmed for the first time this year.", sppcon))
+  
   } else if (length(sppcon) >1){
-  cat(paste(sppcon, collapse= ', '), "were confirmed for the first time this year.")
+  cat(paste("<em>",sppcon, "</em>", collapse= ', '), " were confirmed for the first time this year.",sep="")
 } else {
   print('No new species were detected this year.')
 }
