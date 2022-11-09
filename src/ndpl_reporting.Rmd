@@ -27,8 +27,8 @@ knitr::opts_chunk$set(echo = FALSE,
 ```{r Inputs}
 # set report type as either "stationary" or "mobile"
 report_type = "stationary"
-username = 'ngoodby@batcon.org'
-password = 'pH@7GS$@3okk'
+username = 'clong@batcon.org'
+password = 'Myotisciliolabrum@9721'
 report_grts = "2230"
 project_id = 963
 report_locations = c("")
@@ -236,15 +236,7 @@ if (report_type=="mobile"){
 }
 ```
 
-Review options included:
-
-1. Confirming species ID as assigned by the programs; 
-
-2. Assigning the file to a species couplet, or frequency category based on the frequency and call shape (Section \@ref(potential-species)); 
-
-3. Assigning the file to a species other than what was assigned by the programs; or 
-
-4. Assigning the file as noise, i.e., not a recording of bat echolocation calls. 
+Review options included: 1. Confirming species ID as assigned by the programs; 2. Assigning the file to a species couplet, or frequency category based on the frequency and call shape (Section \@ref(potential-species)); 3. Assigning the file as noise, i.e., not a recording of bat echolocation calls; or 4. Rarely, and when species aren't included in the auto-classification programs, assigning the file to a species other than what was assigned by the programs.  
 
 We reviewed files in order of confidence in identification as expressed by the programs. A confirmed identification of a species in one or more files on a given night at a given site resulted in a designation of species presence for that site-night. When we could not assign any files recorded on a site-night to species, that species was considered “not detected.”
 
@@ -448,7 +440,7 @@ freqs <- species_reference_table %>% dplyr::filter(species_scientific %in% spp_l
     # T ~ paste0("*", species_scientific, "*")
     T ~ sprintf("<em>%s</em>", species_scientific)
   )) %>% 
-  dplyr::select(species_scientific, species_url, common_name, freq_range, species_code)
+  dplyr::select(species_scientific, species_code, species_url, common_name, freq_range)
 ```
 
 ```{r, results='asis', eval=TRUE}
@@ -456,7 +448,7 @@ freqs <- species_reference_table %>% dplyr::filter(species_scientific %in% spp_l
 for (i in seq(1, nrow(freqs))){
   cat("<details>\n")
   cat(sprintf('<summary>\n%s - <a href="%s" target="_blank">%s kHz</a>\n</summary>\n', 
-            freqs[i,]$species_scientific, freqs[i,]$species_url, freqs[i,]$freq_range))
+            freqs[i,]$species_scientific, freqs[i,]$species_code, freqs[i,]$species_url, freqs[i,]$freq_range))
   # cat(sprintf('<summary>\n<a href="%s" target="_blank">%s</a> - %s kHz\n</summary>\n', 
   #             freqs[i,]$species_url, freqs[i,]$species_scientific, freqs[i,]$freq_range))
   if (freqs[i,]$species_code %in% available_sgrams){
@@ -481,6 +473,7 @@ total_species_prev_year <- dat_count %>% dplyr::filter(year != this_year, pres_a
 
 #spp confirmed 1st time this year
 sppcon <- setdiff(total_species_this_year, total_species_prev_year)
+
 
 #spp only confirmed in previous years
 sppcon2 <- setdiff(total_species_prev_year, total_species_this_year)
@@ -806,5 +799,7 @@ proj_link <- sprintf("[here](https://sciencebase.usgs.gov/nabat/#/projects/%s)",
 All acoustic results were uploaded to NABat project `r project_df$project_name[1]` (# `r project_id`) and can be viewed `r proj_link`. *Note that you need to have a NABat account and be a member of the project to be able to view the results on NABat. If you would like to view these results on NABat and don't yet have an account, please contact us.*
 
 To learn more about bats and to support their conservation visit [batcon.org](https://www.batcon.org/).\n
+
+For any questions regarding these results, please contact rapid@batcon.org.
 
 [![](../logos/NABat_logo.png){height="200"}](https://sciencebase.usgs.gov/nabat/#/results)
