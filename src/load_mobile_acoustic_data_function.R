@@ -24,7 +24,8 @@ load_mobile_data <-  function(username, password, project_id, mobile_exclude){
   token = get_refresh_token(token)
   ma_bulk_df = get_ma_bulk_wavs(token,
                                 ma_survey_df,
-                                year = 'all')
+                                year = 'all') %>% 
+    mutate(year = lubridate::year(recording_night))
   
   token = get_refresh_token(token)
   species_df = get_species(token = token)
@@ -32,7 +33,6 @@ load_mobile_data <-  function(username, password, project_id, mobile_exclude){
   mobile_all_dat$survey_event_id <- as.numeric(mobile_all_dat$survey_event_id)
   ma_survey_df$survey_event_id <- as.numeric(ma_survey_df$survey_event_id)
   mobile_all_dat <- left_join(mobile_all_dat, ma_survey_df, keep=F) %>% 
-    mutate(year = lubridate::year(recording_night)) %>% 
     dplyr::filter(!manual_name %in% mobile_exclude) %>% 
     dplyr::filter(!is.na(manual_name)) 
   
@@ -56,5 +56,5 @@ load_mobile_data <-  function(username, password, project_id, mobile_exclude){
     #   value == 0 ~ FALSE,
     #   value > 0 ~ TRUE)) %>%
     dplyr::rename(species = name)
-  return(list(mobile_all_dat, mobile_dat_count, ma_survey_df))
+  return(list(mobile_all_dat, mobile_dat_count, ma_survey_df, ma_bulk_df))
 }

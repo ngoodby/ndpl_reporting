@@ -26,11 +26,11 @@ knitr::opts_chunk$set(echo = FALSE,
 
 ```{r Inputs}
 # set report type as either "stationary" or "mobile"
-report_type = "stationary"
+report_type = "mobile"
 username = 'clong@batcon.org'
 password = 'Myotisciliolabrum@9721'
-report_grts = c("7590", "10662", "18854", "51622")
-project_id = 1114
+report_grts = c(170)
+project_id = 911
 report_locations = c("")
 forest_id <- "NVDOE_20220831"
 partner <- ""
@@ -91,8 +91,6 @@ logos <- list.files(here::here("logos"), full.names = F)
 if (paste0(partner, ".png") %in% logos){
   cat(sprintf('<img src="../logos/%s.png" title= "Report prepared for:" width="auto" height="110" style="padding:10px;"/>', 
               partner))
-  # cat(sprintf('![](../logos/%s)', paste0(partner, ".png")))
-  # cat("{height=100}")
 }
 ```
 
@@ -115,6 +113,7 @@ if (report_type == "mobile"){
   mobile_all_dat <- mobile_data[[1]]
   mobile_dat_count <- mobile_data[[2]]
   ma_survey_df <- mobile_data[[3]]
+  ma_bulk_df <- mobile_data[[4]]
   mobile_this_year = max(mobile_all_dat$year)
 }
 ```
@@ -131,10 +130,18 @@ all_dat <- all_dat %>% left_join(species_reference_table,
   mutate("common_name" = common_name.y) %>% dplyr::select(-common_name.x, -common_name.y) %>% 
   left_join(detector_codes, by = c("detector_type_id"="id")) %>% 
   left_join(mic_codes, by = c("microphone_type_id"="id"))
-current_year <- as.character(this_year)
+
+sa_bulk_df <- sa_bulk_df %>%
+  dplyr::mutate(year = lubridate::year(recording_night)) %>% 
+  left_join(detector_codes, by = c("detector_type_id"="id")) %>% 
+  left_join(mic_codes, by = c("microphone_type_id"="id"))
 
 if (report_type == "mobile"){
   mobile_all_dat <- mobile_all_dat %>% 
+    left_join(detector_codes, by = c("detector_type_id"="id")) %>% 
+    left_join(mic_codes, by = c("microphone_type_id"="id"))
+  
+  ma_bulk_df <- ma_bulk_df %>% 
     left_join(detector_codes, by = c("detector_type_id"="id")) %>% 
     left_join(mic_codes, by = c("microphone_type_id"="id"))
 }
@@ -143,7 +150,7 @@ if (report_type == "mobile"){
 #   report_grts <- unique(all_dat$grts_cell_id)
 # }
 
-#determine whether call files are full spectrum, zero cross, or a mix.
+#determine whether call files are full spectrum, zero cross, or a mix
 fs <- any(str_detect(all_dat$audio_recording_name, ".wav$"))
 zc <- any(str_detect(all_dat$audio_recording_name, ".zc$"))
 if (fs & !zc){
@@ -486,22 +493,29 @@ sppcon2 <- setdiff(total_species_prev_year, total_species_this_year)
 
 
 ```{r}
+# count of total species this year 
 total_species_this_year <- dat_count %>% dplyr::filter(year == this_year, pres_abs == TRUE) %>%
   group_by(year) %>% summarise(n = n_distinct(species)) %>% dplyr::pull(n)
 
+# count of total species all time
 total_species_all_years <- dat_count  %>% 
   dplyr::filter(pres_abs == TRUE) %>% 
   group_by(pres_abs) %>% summarise(n = n_distinct(species)) %>% 
   dplyr::pull(n)
 
-grts_with_spp <- unique(dat_count$grts_cell_id)
+# Identify grts that have species detections this year
+grts_with_spp_this_year <- dat_count %>% filter(year==this_year)
+grts_with_spp_this_year <- unique(grts_with_spp_this_year$grts_cell_id)
 # Identify GRTS in the report where no species were detected
-grts_without_spp <- setdiff(report_grts, grts_with_spp)
+grts_without_spp_this_year <- setdiff(report_grts, grts_with_spp_this_year) %>% as.numeric()
+# Filter to surveys in GRTS cells that have no species detections
+surveys_without_spp <- sa_survey_df %>% filter(grts_cell_id %in% grts_without_spp_this_year)
 
+# count number of species per grts with detections
 total_species_by_grts_this_year <- dat_count %>% dplyr::filter(year == this_year, pres_abs == TRUE) %>% group_by(grts_cell_id) %>% summarise(n = n_distinct(species))
 
 # Add rows to total_species_by_grts_this_year for GRTS where no species were detected
-for (i in grts_without_spp){
+for (i in grts_without_spp_this_year){
   total_species_by_grts_this_year <- total_species_by_grts_this_year %>% 
     add_row(grts_cell_id = i, n = 0)
 }
@@ -509,6 +523,7 @@ for (i in grts_without_spp){
 total_species_by_grts_this_year <- total_species_by_grts_this_year %>% 
   arrange(grts_cell_id)
 
+# count of total species detected in each year acrossd all grts
 total_species_by_year <- dat_count %>% dplyr::filter(pres_abs == TRUE) %>%
   group_by(year) %>% summarise(n = n_distinct(species))
 ```
@@ -516,6 +531,7 @@ total_species_by_year <- dat_count %>% dplyr::filter(pres_abs == TRUE) %>%
 <p style="font-size:16pt">***`r total_species_all_years` bat species have been confirmed over all years of monitoring (see Table \@ref(tab:speciesallyears)):***</p>
 
 ```{r results='asis'}
+# print total number of species per year
 cat("<ul>\n")
   for (i in seq(1:nrow(total_species_by_year))){
     cat(sprintf("<li> %g species in %g </li> \n", total_species_by_year[i,]$n, total_species_by_year[i,]$year))
@@ -526,6 +542,7 @@ cat("</ul>")
 <p style="font-size:16pt"> ***In `r this_year`, we confirmed the presence of `r total_species_this_year` bat species (see Table \@ref(tab:speciesthisyear)):***</p>
 
 ```{r results='asis'}
+# print number of species per grts cell this year
 cat("<ul>\n")
 for (i in seq(1:length(report_grts))){
   cat(sprintf("<li> %g species in GRTS %g </li>\n", total_species_by_grts_this_year[i,]$n, total_species_by_grts_this_year[i,]$grts_cell_id))
@@ -534,6 +551,7 @@ cat("</ul>")
 ```
 
 ```{r species confirmed for the first time this year, results='asis'}
+# print species that were confirmed for the first time this year
 if(length(sppcon) == 1){
   cat(sprintf("<em>%s</em> was confirmed for the first time this year.", sppcon))
   
@@ -553,6 +571,9 @@ sub_x <- function(x){
   if_else(x==TRUE, "X","")
 }
 
+surveys_without_spp <- surveys_without_spp %>% 
+  unite("no_spp", c("year","grts_cell_id"), remove=F)
+
 #tally of species by site
 species_count <- dat_count %>% 
   dplyr::group_by(grts_cell_id, year, species) %>% 
@@ -562,6 +583,9 @@ species_count <- dat_count %>%
   mutate_if(is.logical, sub_x) %>% 
   rename("Species"=species)
 
+# add columns for year_grts that had no detections so they'll print in the table
+for (i in surveys_without_spp$no_spp){species_count[i] <- ""}
+  
 table_names <- names(species_count) %>% str_split(pattern = "_", simplify=T)
 table_names[1,2] <- "Species"
 
@@ -610,9 +634,6 @@ species_table_this_year %>%
   colformat_num(big.mark = "") %>% 
 set_caption(paste("Number of files confirmed for each species and species group detected per site and night at stationary sites in ", this_year))
 ```
-
-
-
 
 ***
 
@@ -675,12 +696,17 @@ if (report_type=='mobile'){
 ## Stationary Acoustic Survey Metadata
 
 ```{r sitemeta, ft.align="left"}
-metadata <- all_dat %>% 
-  dplyr::filter(year == this_year) %>% 
-  dplyr::group_by(grts_cell_id, location_name, detector_model, detector_serial_number, mic_type) %>% 
- dplyr::summarise(Latitude = mean(latitude), Longitude = mean(longitude)) %>% 
+metadata <- sa_bulk_df %>% 
+ dplyr::filter(year == this_year) %>% 
+ arrange(grts_cell_id, location_name, detector_model, detector_serial_number, mic_type) %>% 
+ dplyr::group_by(grts_cell_id, location_name) %>% 
+ slice(1) %>% 
+ dplyr::summarise(detector_model=detector_model,
+                  detector_serial_number = detector_serial_number,
+                  mic_type = mic_type,
+                  Latitude = mean(latitude), Longitude = mean(longitude)) %>% 
  mutate(grts_cell_id = as.character(grts_cell_id))
-    
+
 metadata %>% flextable() %>% 
   merge_v(j = c("grts_cell_id", "location_name")) %>% 
   set_header_labels(.,
@@ -705,7 +731,7 @@ metadata %>% flextable() %>%
 ## Stationary Survey Dates
 
 ```{r surveydates, ft.align="left"}
-survey_dates <- all_dat %>% 
+survey_dates <- sa_bulk_df %>% 
   dplyr::group_by(grts_cell_id, location_name, year) %>% 
   dplyr::summarise(start_date = min(recording_night)) %>% 
   mutate(start_date = ymd(start_date)) %>%
@@ -736,7 +762,8 @@ if (report_type == 'mobile'){
 
 ```{r mobilemeta}
 if (report_type=='mobile'){
-  mobile_metadata <- mobile_all_dat %>% 
+  mobile_metadata <- ma_bulk_df %>% 
+     filter(year==this_year) %>% 
      dplyr::group_by(site_name, detector_model, detector_serial_number, mic_type) %>% 
      dplyr::summarise(start = first(survey_start_time), end = first(survey_end_time)) 
   
@@ -805,7 +832,7 @@ if (length(sgram_list)!=0){
 proj_link <- sprintf("[here](https://sciencebase.usgs.gov/nabat/#/projects/%s)", project_df$project_id[1])
 ```
 
-All acoustic results were uploaded to NABat project `r project_df$project_name[1]` (# `r project_id`) and can be viewed `r proj_link`. *Note that you need to have a NABat account and be a member of the project to be able to view the results on NABat. If you would like to view these results on NABat and don't yet have an account, please contact us.*
+All acoustic results were uploaded to NABat project `r project_df$project_name[1]` (#`r project_id`) and can be viewed `r proj_link`. *Note that you need to have a NABat account and be a member of the project to be able to view the results on NABat. If you would like to view these results on NABat and don't yet have an account, please contact us.*
 
 To learn more about bats and to support their conservation visit [batcon.org](https://www.batcon.org/).\n
 
