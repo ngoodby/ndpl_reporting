@@ -105,6 +105,7 @@ all_dat <- data[[1]]
 dat_count <- data[[2]]
 sa_survey_df <- data[[3]]
 project_df <- data[[4]]
+sa_bulk_df <- data[[5]]
 this_year = max(all_dat$year)
 
 #mobile
@@ -254,7 +255,7 @@ margin: auto;
 
 ```{r map, fig.cap="\\label{fig:map}Map of surveyed locations"}
 source(here::here("src", "stationary_acoustic_map_function.R"))
-map <- make_map(all_dat, dat_count)
+map <- make_map(sa_bulk_df, report_grts)
 unlink(here::here("geojson_files"), recursive = T) 
 dir.create(here::here("geojson_files"))
 sf::st_write(map[[2]], dsn = here::here("geojson_files", paste0("grts_boundaries_", Sys.Date(), ".geojson")), layer = "grts_boundaries.geojson", delete_dsn = T, quiet=T)

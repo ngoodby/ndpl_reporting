@@ -1,4 +1,4 @@
-make_map <- function(all_dat, dat_count){
+make_map <- function(sa_bulk_df, report_grts){
   #' @title Make Map
   #'
   #' @description Generate map of relevant GRTS and survey sites for stationary acoustic data.
@@ -8,21 +8,21 @@ make_map <- function(all_dat, dat_count){
   load(paste0(here::here(), "/data/grts.grid.rda"))
   grts_mapping <- grts.grid %>% 
     st_as_sf() %>%
-    dplyr::filter(GRTS_ID %in% dat_count$grts_cell_id) %>% 
+    dplyr::filter(GRTS_ID %in% report_grts) %>% 
     dplyr::filter(country == "US")
 
   #sf object of site locations to use to write 
-  site_locs <- all_dat %>% 
+  site_locs <- sa_bulk_df %>% 
     dplyr::distinct(grts_cell_id, location_name, latitude, longitude) %>% 
     dplyr::group_by(grts_cell_id, location_name) %>% 
     dplyr::summarise(latitude = mean(latitude),
                      longitude = mean(longitude)) %>% 
     dplyr::mutate(country = "US") %>% 
     sf::st_as_sf(coords = c("longitude","latitude")) %>% 
-    dplyr::filter(grts_cell_id %in% dat_count$grts_cell_id)
+    dplyr::filter(grts_cell_id %in% report_grts)
   
   #plotting survey sites
-  sites <- all_dat %>% 
+  sites <- sa_bulk_df %>% 
     dplyr::distinct(grts_cell_id, location_name, latitude, longitude) %>% 
     dplyr::group_by(grts_cell_id, location_name) %>% 
     dplyr::summarise(latitude = mean(latitude),

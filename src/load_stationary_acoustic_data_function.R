@@ -55,5 +55,5 @@ load_nabat_data <- function(username, password, proj_id, report_grts, report_loc
       value > 0 ~ TRUE)) %>%
     dplyr::rename(species = name) %>%
     dplyr::select(-value)
-  return(list(all_dat, dat_count, sa_survey_df, project_df))
+  return(list(all_dat, dat_count, sa_survey_df, project_df, sa_bulk_df))
 }
