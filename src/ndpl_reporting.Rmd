@@ -26,11 +26,11 @@ knitr::opts_chunk$set(echo = FALSE,
 
 ```{r Inputs}
 # set report type as either "stationary" or "mobile"
-report_type = "mobile"
+report_type = "stationary"
 username = 'clong@batcon.org'
 password = 'Myotisciliolabrum@9721'
-report_grts = c(170)
-project_id = 911
+report_grts = c(7590, 10662, 18854, 51622)
+project_id = 1114
 report_locations = c("")
 forest_id <- "NVDOE_20220831"
 partner <- ""
