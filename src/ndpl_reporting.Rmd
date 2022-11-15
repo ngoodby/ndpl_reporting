@@ -29,14 +29,14 @@ knitr::opts_chunk$set(echo = FALSE,
 report_type = "stationary"
 username = 'clong@batcon.org'
 password = 'Myotisciliolabrum@9721'
-report_grts = c(7590, 10662, 18854, 51622)
-project_id = 1114
+report_grts = c("12655", "94993")
+project_id = 949
 report_locations = c("")
-forest_id <- "NVDOE_20220831"
-partner <- ""
-report_reference <- "Nevada Department of Energy"
+forest_id <- "USAF_LittleRock"
+partner <- "USAF"
+report_reference <- "Little Rock Air Force Base"
 
-exclude <- c("LACITABR", "LANOTABR","LABLPAHE", "LABOPESU", "EUMAEUPE","EUMAIDPH", "MYCAMYYU", "MYEVMYTH", "MYLUMYVO", "EPFULANO", "Q10k", "Q15k", "Q20k", "Q25k", "Q40k", "40kMyo", "40k", "Q50k", "LACITABR,HiF", "Q25k,MYCAMYYU", "Q25k,HiF", "Q40k,Q25k", "Q40k,LoF", "MY40", "Social", "25K", "25k", "NOISE", "LowF", "HighF", "NoID", "LoF", "HiF", "Noise", "MYSP")
+exclude <- c("LACITABR", "LANOTABR","LABLPAHE", "LABOPESU", "LABOLASE", "EUMAEUPE","EUMAIDPH", "MYCAMYYU", "MYEVMYTH", "MYLUMYVO", "EPFULANO", "Q10k", "Q15k", "Q20k", "Q25k", "Q40k", "40kMyo", "40k", "Q50k", "LACITABR,HiF", "Q25k,MYCAMYYU", "Q25k,HiF", "Q40k,Q25k", "Q40k,LoF", "MY40", "Social", "25K", "25k", "NOISE", "LowF", "HighF", "NoID", "LoF", "HiF", "Noise", "MYSP")
 
 mobile_exclude = c('NOISE', 'NoID', 'Noise')
 ```
@@ -200,7 +200,7 @@ spp_list <- spp_list %>% pivot_longer(., 2:length(spp_list)) %>%
 ```
 
 
-In `r this_year`, the `r report_reference` implemented acoustic bat monitoring protocols described in _A Plan for the North American Bat Monitoring Program (NABat)_. Stationary detectors were deployed within `r length(report_grts)` GRTS cell(s) for four consecutive nights each. Full spectrum echolocation calls were recorded using the detectors in Table \@ref(tab:sitemeta). Figure \@ref(fig:map) shows the location of each detector within the cell, and Section  \@ref(stationary-site-photos) shows the habitat at each site, if site photos were provided.
+In `r this_year`, the `r report_reference` implemented acoustic bat monitoring protocols described in _A Plan for the North American Bat Monitoring Program (NABat)_. Stationary detectors were deployed within `r length(report_grts)` GRTS cell(s) for 86 consecutive nights each. `r recording_type` echolocation calls were recorded using the detectors in Table \@ref(tab:sitemeta). Figure \@ref(fig:map) shows the location of each detector within the cell.
 
 
 ```{r results = 'asis'}
@@ -236,7 +236,7 @@ if (all(is.na(added_species)) & all(is.na(subtracted_species))){
 
 Sonobat 4.4 was then used to manually identify files.
 
-For stationary data, we attempted to confirm the identification of at least one acoustic file per species, per night, per site by visually inspecting the species ID proposed by the programs. Up to ten files per species-site-night were reviewed in an attempt to confirm the species ID.
+For stationary data, we reviewed the first and last four monitoring nights per site in an attempt to confirm the identification of at least one acoustic file per species, per site by visually inspecting the species ID proposed by the programs. Up to ten files per species-site-night were reviewed in an attempt to confirm the species ID.
 
 ```{r results = 'asis'}
 if (report_type=="mobile"){
@@ -272,94 +272,94 @@ map[[1]]
 
 ***
 
-# __Stationary Site Photos__
+<!-- # __Stationary Site Photos__ -->
 
 ```{r habitat, message=FALSE}
-# load function to pull photos from NABat AWS webserver
-source(here::here("src","site_photos.R"))
-# run function for all survey events and store outputs
-photo_queries <- sa_survey_df %>% dplyr::select(project_id, survey_id, survey_event_id, grts_cell_id) %>% distinct()
-pics=list()
-for (i in seq(1, nrow(photo_queries))){
-  proj_id <-  photo_queries[i,1]
-  surv_num <-  photo_queries[i,2]
-  surv_id <-  photo_queries[i,3]
-  photos_out <-  get_site_photos(username, password, proj_id, surv_num, surv_id)
-  pics <-  append(pics, list(photos_out))
-}
-photo_queries$photos <- pics
+# # load function to pull photos from NABat AWS webserver
+# source(here::here("src","site_photos.R"))
+# # run function for all survey events and store outputs
+# photo_queries <- sa_survey_df %>% dplyr::select(project_id, survey_id, survey_event_id, grts_cell_id) %>% distinct()
+# pics=list()
+# for (i in seq(1, nrow(photo_queries))){
+#   proj_id <-  photo_queries[i,1]
+#   surv_num <-  photo_queries[i,2]
+#   surv_id <-  photo_queries[i,3]
+#   photos_out <-  get_site_photos(username, password, proj_id, surv_num, surv_id)
+#   pics <-  append(pics, list(photos_out))
+# }
+# photo_queries$photos <- pics
 ```
 
 ```{r}
-# delete site_photos folder from previous reports generated
-unlink(here::here("site_photos"), recursive = T)
-
-# create folders for each survey site and put the relevant photos into them
-for (i in seq(1, length(pics))){
-  if (!is.null(pics[[i]])){
-    grts <- sa_survey_df[i,]$grts_cell_id
-    loc <- sa_survey_df[i,]$event
-    dir.create(here::here("site_photos", grts, loc), recursive=T)
-      for (pic in seq(1, length(pics[[i]]))){
-        photo <- pics[[i]][pic]
-        path <- here::here("site_photos", grts, loc, paste0(pic, ".jpg"))
-        photo <- image_scale(photo, "350x350!")
-        image_write(photo, path)
-      }
-    }
-  }
-
-# get paths to photos
-files <- list.files(path = here::here("site_photos"),
-                    pattern = "^.*.jpg$",
-                    full.names = T,
-                    recursive = T)
-files_short <- list.files(path = here::here("site_photos"),
-                    pattern = "^.*.jpg$",
-                    full.names = F,
-                    recursive = T)
-
-# organize paths by GRTS cell
-grts_with_photos <- photo_queries %>% filter(photos != "NULL")
-grts_with_photos <- unique(grts_with_photos$grts_cell_id)
-photo_grts <- as.character(grts_with_photos)
-grts_short_photo_paths <- list()
-grts_long_photo_paths <- list()
-for(g in photo_grts){
-  long_paths <- files %>% str_subset(pattern = g)
-  short_paths <- files_short %>% str_subset(pattern = g)
-  grts_short_photo_paths <- append(grts_short_photo_paths, list(short_paths))
-  grts_long_photo_paths <- append(grts_long_photo_paths, list(long_paths))
-}
-
-# create captions for photos
-cells <- list()
-sites <- list()
-captions <- list()
-for (i in seq(1, length(grts_with_photos))){
-  c <- grts_short_photo_paths[[i]] %>% strsplit( "/" ) %>% sapply( "[", 1 )
-  s <- grts_short_photo_paths[[i]] %>% strsplit( "/" ) %>% sapply( "[", 2 )
-  caps <- str_c("NABat Cell ", c, "; Survey Site: ", s, sep = "")
-  cells <- append(cells, list(c))
-  sites <- append(sites, list(s))
-  captions <- append(captions, list(caps))
-}
+# # delete site_photos folder from previous reports generated
+# unlink(here::here("site_photos"), recursive = T)
+# 
+# # create folders for each survey site and put the relevant photos into them
+# for (i in seq(1, length(pics))){
+#   if (!is.null(pics[[i]])){
+#     grts <- sa_survey_df[i,]$grts_cell_id
+#     loc <- sa_survey_df[i,]$event
+#     dir.create(here::here("site_photos", grts, loc), recursive=T)
+#       for (pic in seq(1, length(pics[[i]]))){
+#         photo <- pics[[i]][pic]
+#         path <- here::here("site_photos", grts, loc, paste0(pic, ".jpg"))
+#         photo <- image_scale(photo, "350x350!")
+#         image_write(photo, path)
+#       }
+#     }
+#   }
+# 
+# # get paths to photos
+# files <- list.files(path = here::here("site_photos"),
+#                     pattern = "^.*.jpg$",
+#                     full.names = T,
+#                     recursive = T)
+# files_short <- list.files(path = here::here("site_photos"),
+#                     pattern = "^.*.jpg$",
+#                     full.names = F,
+#                     recursive = T)
+# 
+# # organize paths by GRTS cell
+# grts_with_photos <- photo_queries %>% filter(photos != "NULL")
+# grts_with_photos <- unique(grts_with_photos$grts_cell_id)
+# photo_grts <- as.character(grts_with_photos)
+# grts_short_photo_paths <- list()
+# grts_long_photo_paths <- list()
+# for(g in photo_grts){
+#   long_paths <- files %>% str_subset(pattern = g)
+#   short_paths <- files_short %>% str_subset(pattern = g)
+#   grts_short_photo_paths <- append(grts_short_photo_paths, list(short_paths))
+#   grts_long_photo_paths <- append(grts_long_photo_paths, list(long_paths))
+# }
+# 
+# # create captions for photos
+# cells <- list()
+# sites <- list()
+# captions <- list()
+# for (i in seq(1, length(grts_with_photos))){
+#   c <- grts_short_photo_paths[[i]] %>% strsplit( "/" ) %>% sapply( "[", 1 )
+#   s <- grts_short_photo_paths[[i]] %>% strsplit( "/" ) %>% sapply( "[", 2 )
+#   caps <- str_c("NABat Cell ", c, "; Survey Site: ", s, sep = "")
+#   cells <- append(cells, list(c))
+#   sites <- append(sites, list(s))
+#   captions <- append(captions, list(caps))
+# }
 ```
 
 ```{r, results='asis', eval=TRUE}
-# print photos under expandable GRTS cell labels
-if (length(cells[[1]])==0){
-  cat("No photos are available for the survey locations in this report.")
-  } else {
-  for (i in seq(1, length(grts_long_photo_paths))){
-    cat("<details>\n")
-    cat(sprintf("<summary>Click to View Site Photos for GRTS %s</summary>\n", report_grts[i]))
-    for(j in seq(1, length(grts_long_photo_paths[[i]]))){
-      cat(sprintf('![%s](%s)\n', captions[[i]][j], grts_long_photo_paths[[i]][j]), sep = '\n')
-    }
-    cat("</details>\n\n")
-  }
-}
+# # print photos under expandable GRTS cell labels
+# if (length(cells[[1]])==0){
+#   cat("No photos are available for the survey locations in this report.")
+#   } else {
+#   for (i in seq(1, length(grts_long_photo_paths))){
+#     cat("<details>\n")
+#     cat(sprintf("<summary>Click to View Site Photos for GRTS %s</summary>\n", report_grts[i]))
+#     for(j in seq(1, length(grts_long_photo_paths[[i]]))){
+#       cat(sprintf('![%s](%s)\n', captions[[i]][j], grts_long_photo_paths[[i]][j]), sep = '\n')
+#     }
+#     cat("</details>\n\n")
+#   }
+# }
 ```
 
 ***
