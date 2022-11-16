@@ -29,8 +29,8 @@ knitr::opts_chunk$set(echo = FALSE,
 report_type = "stationary"
 username = 'clong@batcon.org'
 password = 'Myotisciliolabrum@9721'
-report_grts = c("12655", "94993")
-project_id = 949
+report_grts = c("")
+project_id = 963
 report_locations = c("")
 forest_id <- "USAF_LittleRock"
 partner <- "USAF"
@@ -263,7 +263,7 @@ margin: auto;
 
 ```{r map, fig.cap="\\label{fig:map}Map of surveyed locations"}
 source(here::here("src", "stationary_acoustic_map_function.R"))
-map <- make_map(sa_bulk_df, report_grts)
+map <- make_map(sa_bulk_df, report_grts, report_locations)
 unlink(here::here("geojson_files"), recursive = T) 
 dir.create(here::here("geojson_files"))
 sf::st_write(map[[2]], dsn = here::here("geojson_files", paste0("grts_boundaries_", Sys.Date(), ".geojson")), layer = "grts_boundaries.geojson", delete_dsn = T, quiet=T)
