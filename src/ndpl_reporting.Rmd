@@ -28,9 +28,9 @@ knitr::opts_chunk$set(echo = FALSE,
 # set report type as either "stationary" or "mobile"
 report_type = "stationary"
 username = 'clong@batcon.org'
-password = 'Myotisciliolabrum@9721'
-report_grts = c("")
-project_id = 963
+password = 'Lasiurusintermedius@9721'
+report_grts = c("12655", "94993")
+project_id = 949
 report_locations = c("")
 forest_id <- "USAF_LittleRock"
 partner <- "USAF"
@@ -179,12 +179,12 @@ subtracted_species <- lookup_t %>% filter(data_id==forest_id) %>% pull(Kal_subtr
 ```
 
 ```{r}
-spp_list <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/1UggTTGxYYmVM2FVpjHqn-q0AZLb-oqGKlJytg7r5JXg/edit?usp=sharing', sheet = "SB_Species_List") %>% mutate(keyword = str_split(Species_List, ",")) %>%
+spp_list <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/1UggTTGxYYmVM2FVpjHqn-q0AZLb-oqGKlJytg7r5JXg/edit?usp=sharing', sheet = "K_Species_List") %>% mutate(keyword = str_split(Species_List, ",")) %>%
   unnest(keyword) %>% dplyr::select(-Species_List) %>%
-  group_by(Classifier, keyword) %>% summarise(value = n()) %>%
+  group_by(State, keyword) %>% summarise(value = n()) %>%
   pivot_wider(names_from = keyword, values_from = value, values_fill = 0) %>%
   # dplyr::select(-any_of(subtracted_species$value)) %>% #remove species from the classifier
-  dplyr::filter(Classifier == classifier) #filter to the classifier of interest
+  dplyr::filter(State == kpro_region) #filter to the classifier of interest
 
 #add species to the classifier
 if (!all(is.na(added_species))){
@@ -210,7 +210,7 @@ if (report_type=="mobile"){
 }
 ```
 
-The resulting recording files were sent to the National Data Processing Lab (NDPL) for processing. Acoustic recordings were aligned with metadata, renamed, and attributed using a custom R and Python code developed by Conservation Metrics Inc (CMI) and the United States Geological Survey (USGS). Files were then scrubbed of noise using Sonobat Data Wizard 4.4. Sonobatch was used in Sonobat 4.4 set to the `r classifier` classifier region (Section  \@ref(potential-species)) to determine call parameters and the suggested species identification. Files were then run through Kaleidoscope Pro 5.3.9, set to the `r kpro_region` region, to provide additional automated identification used in manual vetting. 
+The resulting recording files were sent to the National Data Processing Lab (NDPL) for processing. Acoustic recordings were aligned with metadata, renamed, and attributed using a custom R and Python code developed by Conservation Metrics Inc (CMI) and the United States Geological Survey (USGS). Files were then scrubbed of noise using Kaleidoscope Pro 5.3.9 and were additionally run through the auto-ID program set to the `r kpro_region`. Files that were not scrubbed out as noise were then run through Sonobatch in Sonobat 4.4 set to the `r classifier` classifier region (Section  \@ref(potential-species)) to determine call parameters and the suggested species identification. Use of both programs is to provide additional automated identification used in manual vetting. 
 
 ```{r results = 'asis'}
 #print added and subtracted species depending on whether any were add/removed or not
