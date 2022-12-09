@@ -568,7 +568,7 @@ if(length(sppcon) == 1){
   cat(sprintf("<em>%s</em> was confirmed for the first time this year.", sppcon))
   
   } else if (length(sppcon) >1){
-  cat(paste("<em style='font-size:16pt'><b>",sppcon, "</b></em>", collapse= ', '), " were confirmed for the first time this year.",sep="")
+  cat("<em style='font-size:16pt'><b>", paste0(sppcon, collapse=', '), " were confirmed for the first time this year.</b></em>", sep="")
 } else {
   print('No new species were detected this year.')
 }
@@ -615,7 +615,7 @@ species_count %>%
    flextable::align(., align = "center", part = "all") %>%
      set_table_properties(., width = 1, layout = "autofit") %>%
   colformat_num(big.mark = "") %>% 
-  set_caption("Presence (X) or not detected (blank cell) of bat species recorded at stationary sites every year.")
+  set_caption("Presence (X) or not detected (blank cell) of bat species recorded at stationary sites every year")
 ```
 
 ***
@@ -698,7 +698,7 @@ if (report_type=='mobile'){
     bold(., j = 1, bold = TRUE) %>% 
     set_table_properties(., width = 1, layout = "autofit") %>% 
     colformat_num(big.mark = "") %>% 
-    set_caption(paste("Species of bat, group and total number of files containing bat echolocation files recorded on mobile transects."))
+    set_caption(paste("Species of bat, group and total number of files containing bat echolocation files recorded on mobile transects"))
 
 }
 ```
@@ -763,7 +763,7 @@ survey_dates %>% flextable() %>%
   bg(., bg = "grey", part = "header") %>% 
   flextable::align(., align = "center", part = "all") %>% 
   set_table_properties(., layout = "autofit") %>% 
-  set_caption("Survey start dates for each year for each detector location.")
+  set_caption("Survey start dates for each year for each detector location")
 ```
 
 ```{r results='asis'}
