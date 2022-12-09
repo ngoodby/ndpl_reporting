@@ -442,7 +442,7 @@ if (report_type=='mobile'){
 
 # __Potential Species__
 
-Species that may occur in surveyed area of the `r report_reference` and their characteristic frequency range. Click on the arrows to view an example sonogram for each species. Click on the links to learn more about that species.
+Species that may occur in surveyed area of the `r report_reference` and their characteristic frequency range. Click on the arrows to view an example sonogram for each species. Click on the links to learn more about that species. Species of greatest conservation need (SGCN), as designated by the state's wildlife action plan, are indicated where applicable. 
 
 ```{r species frequency table}
 #bring in data on which species are SGCN in the state specified by the K-Pro region
@@ -568,7 +568,7 @@ if(length(sppcon) == 1){
   cat(sprintf("<em>%s</em> was confirmed for the first time this year.", sppcon))
   
   } else if (length(sppcon) >1){
-  cat(paste("<em>",sppcon, "</em>", collapse= ', '), " were confirmed for the first time this year.",sep="")
+  cat(paste("<em style='font-size:16pt'><b>",sppcon, "</b></em>", collapse= ', '), " were confirmed for the first time this year.",sep="")
 } else {
   print('No new species were detected this year.')
 }
