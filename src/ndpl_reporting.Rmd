@@ -26,19 +26,21 @@ knitr::opts_chunk$set(echo = FALSE,
 
 ```{r Inputs}
 # set report type as either "stationary" or "mobile"
-report_type = "stationary"
+report_type = "mobile"
 username = 'clong@batcon.org'
 password = 'Lasiurusintermedius@9721'
-report_grts = c("12655", "94993")
-project_id = 949
+report_grts_stationary= "10411"
+report_grts_mobile= "2543"
+project_id = 494
 report_locations = c("")
-forest_id <- "USAF_LittleRock"
-partner <- "USAF"
-report_reference <- "Little Rock Air Force Base"
+forest_id <- "ShawneeNF"
+partner <- "US Forest Service"
+report_reference <- "Shawnee National Forest"
+
 
 exclude <- c("LACITABR", "LANOTABR","LABLPAHE", "LABOPESU", "LABOLASE", "EUMAEUPE","EUMAIDPH", "MYCAMYYU", "MYEVMYTH", "MYLUMYVO", "EPFULANO", "Q10k", "Q15k", "Q20k", "Q25k", "Q40k", "40kMyo", "40k", "Q50k", "LACITABR,HiF", "Q25k,MYCAMYYU", "Q25k,HiF", "Q40k,Q25k", "Q40k,LoF", "MY40", "Social", "25K", "25k", "NOISE", "LowF", "HighF", "NoID", "LoF", "HiF", "Noise", "MYSP")
 
-mobile_exclude = c('NOISE', 'NoID', 'Noise')
+ mobile_exclude = c('NOISE', 'NoID', 'Noise')
 ```
 
 ```{r results = 'hide'}
@@ -97,7 +99,7 @@ if (paste0(partner, ".png") %in% logos){
 #stationary
 source(here::here("src", "load_stationary_acoustic_data_function.R"))
 source(here::here("src", "get_nabat_gql_function_edited.R"))
-data <- load_nabat_data(username, password, project_id, report_grts, report_locations, exclude)
+data <- load_nabat_data(username, password, project_id, report_grts_stationary, report_locations, exclude)
 all_dat <- data[[1]]
 dat_count <- data[[2]]
 sa_survey_df <- data[[3]]
@@ -108,7 +110,7 @@ this_year = max(all_dat$year)
 #mobile
 if (report_type == "mobile"){
   source(here::here('src', 'load_mobile_acoustic_data_function.R'))
-  mobile_data <- load_mobile_data(username, password, project_id, mobile_exclude)
+  mobile_data <- load_mobile_data(username, password, project_id, report_grts_mobile)
   mobile_all_dat <- mobile_data[[1]]
   mobile_dat_count <- mobile_data[[2]]
   ma_survey_df <- mobile_data[[3]]
@@ -145,8 +147,8 @@ if (report_type == "mobile"){
     left_join(mic_codes, by = c("microphone_type_id"="id"))
 }
 
-if (report_grts[[1]] == ""){
-  report_grts <- sa_bulk_df %>% filter(year==this_year) %>% .$grts_cell_id %>% unique()
+if (report_grts_stationary[[1]] == ""){
+  report_grts_stationary <- sa_bulk_df %>% filter(year==this_year) %>% .$grts_cell_id %>% unique()
 }
 
 #determine whether call files are full spectrum, zero cross, or a mix
@@ -167,13 +169,13 @@ if (fs & !zc){
 
 ```{r}
 #get classifier info from Google
-lookup_t <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/1UggTTGxYYmVM2FVpjHqn-q0AZLb-oqGKlJytg7r5JXg/edit?usp=sharing', sheet = "2022")
-classifier <- lookup_t %>% filter(data_id==forest_id) %>% pull(Species_List)
-kpro_region <- lookup_t %>% filter(data_id==forest_id) %>% pull(Kal_Classifier)
-added_species <- lookup_t %>% filter(data_id==forest_id) %>% pull(Kal_addspp) %>% 
+lookup_t <- googlesheets4::read_sheet('https://docs.google.com/spreadsheets/d/1UggTTGxYYmVM2FVpjHqn-q0AZLb-oqGKlJytg7r5JXg/edit?usp=sharing', sheet = "2021")
+classifier <- lookup_t %>% filter(ForestID==forest_id) %>% pull(Species_List)
+kpro_region <- lookup_t %>% filter(ForestID==forest_id) %>% pull(Kal_Classifier)
+added_species <- lookup_t %>% filter(ForestID==forest_id) %>% pull(Kal_addspp) %>% 
   as_tibble() %>% separate_rows(.,1,sep = ",") %>% mutate("value" = str_trim(.$value)) %>% 
   left_join(., species_reference_table, by=c("value" = "species_code_6")) %>% dplyr::select(value, common_name)
-subtracted_species <- lookup_t %>% filter(data_id==forest_id) %>% pull(Kal_subtrspp) %>% 
+subtracted_species <- lookup_t %>% filter(ForestID==forest_id) %>% pull(Kal_subtrspp) %>% 
   as_tibble() %>% separate_rows(.,1,sep = ",") %>% mutate("value" = str_trim(.$value)) %>% 
   left_join(., species_reference_table, by=c("value" = "species_code_6")) %>% dplyr::select(value, common_name)
 ```
@@ -201,7 +203,7 @@ num_grts_this_year <- n_distinct(num_grts_this_year$grts_cell_id)
 ```
 
 
-In `r this_year`, the `r report_reference` implemented acoustic bat monitoring protocols described in _A Plan for the North American Bat Monitoring Program (NABat)_. Stationary detectors were deployed within `r num_grts_this_year` GRTS cell(s) for 86 consecutive nights each. `r recording_type` echolocation calls were recorded using the detectors in Table \@ref(tab:sitemeta). Figure \@ref(fig:map) shows the location of each detector within the cell.
+In `r this_year`, the `r report_reference` implemented acoustic bat monitoring protocols described in _A Plan for the North American Bat Monitoring Program (NABat)_. Stationary detectors were deployed within `r num_grts_this_year` GRTS cell(s) for four consecutive nights each. `r recording_type` echolocation calls were recorded using the detectors in Table \@ref(tab:sitemeta). Figure \@ref(fig:map) shows the location of each detector within the cell.
 
 
 ```{r results = 'asis'}
@@ -263,7 +265,7 @@ margin: auto;
 
 ```{r map, fig.cap="\\label{fig:map}Map of surveyed locations"}
 source(here::here("src", "stationary_acoustic_map_function.R"))
-map <- make_map(sa_bulk_df, report_grts, report_locations)
+map <- make_map(sa_bulk_df, report_grts_stationary, report_locations)
 unlink(here::here("geojson_files"), recursive = T) 
 dir.create(here::here("geojson_files"))
 sf::st_write(map[[2]], dsn = here::here("geojson_files", paste0("grts_boundaries_", Sys.Date(), ".geojson")), layer = "grts_boundaries.geojson", delete_dsn = T, quiet=T)
@@ -354,7 +356,7 @@ map[[1]]
 #   } else {
 #   for (i in seq(1, length(grts_long_photo_paths))){
 #     cat("<details>\n")
-#     cat(sprintf("<summary>Click to View Site Photos for GRTS %s</summary>\n", report_grts[i]))
+#     cat(sprintf("<summary>Click to View Site Photos for GRTS %s</summary>\n", report_grts_stationary[i]))
 #     for(j in seq(1, length(grts_long_photo_paths[[i]]))){
 #       cat(sprintf('![%s](%s)\n', captions[[i]][j], grts_long_photo_paths[[i]][j]), sep = '\n')
 #     }
@@ -364,11 +366,13 @@ map[[1]]
 ```
 
 ***
+
 ```{r results = 'asis'}
-if (report_type=="mobile"){
-  cat("# __Map of Mobile Transects__")
-}
+ if (report_type=="mobile"){
+   cat("# __Map of Mobile Transects__")
+ }
 ```
+
 
 ```{r mobilemap, fig.cap="\\label{fig:map}Map of transects"}
 if (report_type=='mobile'){
@@ -428,6 +432,7 @@ if (report_type=='mobile'){
     hideGroup(c("Detections", "Legend"))
 }
 ```
+
 
 # __Potential Species__
 
@@ -508,7 +513,7 @@ total_species_all_years <- dat_count  %>%
 grts_with_spp_this_year <- dat_count %>% filter(year==this_year)
 grts_with_spp_this_year <- unique(grts_with_spp_this_year$grts_cell_id)
 # Identify GRTS in the report where no species were detected
-grts_without_spp_this_year <- setdiff(report_grts, grts_with_spp_this_year) %>% as.numeric()
+grts_without_spp_this_year <- setdiff(report_grts_stationary, grts_with_spp_this_year) %>% as.numeric()
 # Filter to surveys in GRTS cells that have no species detections
 surveys_without_spp <- sa_survey_df %>% filter(grts_cell_id %in% grts_without_spp_this_year)
 
@@ -545,7 +550,7 @@ cat("</ul>")
 ```{r results='asis'}
 # print number of species per grts cell this year
 cat("<ul>\n")
-for (i in seq(1:length(report_grts))){
+for (i in seq(1:length(report_grts_stationary))){
   cat(sprintf("<li> %g species in GRTS %g </li>\n", total_species_by_grts_this_year[i,]$n, total_species_by_grts_this_year[i,]$grts_cell_id))
 }
 cat("</ul>")
