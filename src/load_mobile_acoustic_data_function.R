@@ -1,4 +1,5 @@
-load_mobile_data <-  function(username, password, project_id, mobile_exclude){
+load_mobile_data <-  function(username, password, project_id, 
+                              report_grts_mobile, mobile_exclude){
   #' @title Load mobile NABat data
   #'
   #' @description Load and clean mobile acoustic NABat survey data.
@@ -19,6 +20,10 @@ load_mobile_data <-  function(username, password, project_id, mobile_exclude){
                                                 i)
       ma_survey_df <- bind_rows(ma_survey_df, ma_survey_df_add)
     }
+  }
+  
+  if (report_grts_mobile[1] != ""){
+    ma_survey_df = ma_survey_df %>% dplyr::filter(grts_cell_id %in% report_grts_mobile)
   }
   
   token = get_refresh_token(token)

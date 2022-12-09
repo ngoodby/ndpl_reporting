@@ -26,12 +26,13 @@ knitr::opts_chunk$set(echo = FALSE,
 
 ```{r Inputs}
 # set report type as either "stationary" or "mobile"
+# if you want to leave a field black just leave it as ""
 report_type = "mobile"
 username = 'clong@batcon.org'
 password = 'Lasiurusintermedius@9721'
-report_grts_stationary= "10411"
-report_grts_mobile= "2543"
-project_id = 494
+report_grts_stationary = "10411"
+report_grts_mobile = "170"
+project_id = 911
 report_locations = c("")
 forest_id <- "ShawneeNF"
 partner <- "US Forest Service"
@@ -99,7 +100,8 @@ if (paste0(partner, ".png") %in% logos){
 #stationary
 source(here::here("src", "load_stationary_acoustic_data_function.R"))
 source(here::here("src", "get_nabat_gql_function_edited.R"))
-data <- load_nabat_data(username, password, project_id, report_grts_stationary, report_locations, exclude)
+data <- load_nabat_data(username, password, project_id, report_grts_stationary, 
+                        report_locations, exclude)
 all_dat <- data[[1]]
 dat_count <- data[[2]]
 sa_survey_df <- data[[3]]
@@ -110,7 +112,11 @@ this_year = max(all_dat$year)
 #mobile
 if (report_type == "mobile"){
   source(here::here('src', 'load_mobile_acoustic_data_function.R'))
-  mobile_data <- load_mobile_data(username, password, project_id, report_grts_mobile)
+  mobile_data <- load_mobile_data(username = username, 
+                                  password = password, 
+                                  project_id = project_id, 
+                                  report_grts_mobile = report_grts_mobile,
+                                  mobile_exclude = mobile_exclude)
   mobile_all_dat <- mobile_data[[1]]
   mobile_dat_count <- mobile_data[[2]]
   ma_survey_df <- mobile_data[[3]]
